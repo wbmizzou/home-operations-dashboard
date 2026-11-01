@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import SearchBox from "@/components/SearchBox";
 import { createClient } from "@/lib/supabase/server";
 import { PRIORITIES, money, type Project } from "@/lib/constants";
 
@@ -15,7 +17,8 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   if (sp.priority) query = query.eq("priority", Number(sp.priority));
   if (sp.category) sp.category === "none" ? (query = query.is("category_id", null)) : (query = query.eq("category_id", sp.category));
   if (sp.season) query = query.overlaps("seasons", [sp.season, "Anytime"]);
-  if (sp.q) query = query.ilike("title", `%${sp.q}%`);
+  const term = sp.q?.replace(/[,()"\\%_*]/g, " ").trim();
+  if (term) query = query.or(`title.ilike."%${term}%",notes.ilike."%${term}%",next_action.ilike."%${term}%",target_note.ilike."%${term}%"`);
   const { data } = await query;
   const projects = (data ?? []) as Project[];
 
@@ -26,10 +29,11 @@ export default async function Projects({ searchParams }: { searchParams: Promise
       <header className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl text-moss">Projects</h1>
-          <p className="text-sm text-muted">{projects.length} shown{filters.length ? ` · ${filters.join(" · ")}` : ""}</p>
+          <p className="text-sm text-muted">{projects.length} shown{filters.length ? ` · ${filters.join(" · ")}` : ""}{term ? ` · “${term}”` : ""}</p>
         </div>
-        {filters.length > 0 || sp.q ? <Link href="/projects" className="text-sm text-moss underline">Clear filters</Link> : null}
+        {filters.length > 0 || sp.q ? <Link href="/projects" className="text-sm text-moss underline">Clear all</Link> : null}
       </header>
+      <div className="mt-4"><Suspense><SearchBox /></Suspense></div>
       <ul className="card mt-6 divide-y divide-line">
         {projects.map((p) => (
           <li key={p.id}><Link href={`/projects/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3">
@@ -50,7 +54,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
             </div>
           </Link></li>
         ))}
-        {projects.length === 0 && <li className="p-6 text-center text-sm text-muted">No projects match.</li>}
+        {projects.length === 0 && <li className="p-6 text-center text-sm text-muted">Nothing found under these leaves. 🍂 Try fewer words or clear the filters.</li>}
       </ul>
     </>
   );
