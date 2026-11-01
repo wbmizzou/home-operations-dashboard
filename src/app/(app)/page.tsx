@@ -29,7 +29,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 function ProjectRow({ p }: { p: Project }) {
   return (
     <li>
-      <Link href={`/projects?q=${encodeURIComponent(p.title)}`} className="flex items-center justify-between gap-3 px-4 py-3">
+      <Link href={`/projects/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3">
         <div className="min-w-0">
           <div className="truncate font-medium">{p.title}</div>
           <div className="truncate text-xs text-muted">{p.categories?.name ?? "Uncategorized"} · {p.status}</div>

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import NewProjectForm from "@/components/NewProjectForm";
+import ProjectForm from "@/components/ProjectForm";
 
 export default async function NewProject() {
   const supabase = await createClient();
@@ -10,7 +10,7 @@ export default async function NewProject() {
   return (
     <>
       <h1 className="text-3xl text-moss">Add a project</h1>
-      <NewProjectForm categories={cats ?? []} projects={projects ?? []} />
+      <ProjectForm categories={cats ?? []} projects={projects ?? []} />
     </>
   );
 }

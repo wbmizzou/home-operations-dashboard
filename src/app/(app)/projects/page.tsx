@@ -32,7 +32,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
       </header>
       <ul className="card mt-6 divide-y divide-line">
         {projects.map((p) => (
-          <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
+          <li key={p.id}><Link href={`/projects/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3">
             <div className="min-w-0">
               <div className="truncate font-medium">{p.title}</div>
               <div className="truncate text-xs text-muted">
@@ -48,7 +48,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
                 <div className="text-xs text-muted">{money(Number(p.actual_cost ?? p.quoted_cost ?? p.estimated_cost))}</div>
               )}
             </div>
-          </li>
+          </Link></li>
         ))}
         {projects.length === 0 && <li className="p-6 text-center text-sm text-muted">No projects match.</li>}
       </ul>
