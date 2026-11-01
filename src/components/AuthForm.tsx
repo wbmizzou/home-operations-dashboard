@@ -42,7 +42,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
           autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <p className="text-sm text-berry">{error}</p>}
         {info && <p className="text-sm text-moss">{info}</p>}
-        <button className="btn w-full" disabled={busy}>{busy ? "…" : mode === "login" ? "Log in" : "Sign up"}</button>
+        <button className="btn inline-flex w-full" disabled={busy}>{busy ? "…" : mode === "login" ? "Log in" : "Sign up"}</button>
       </form>
       <p className="mt-4 text-center text-sm text-muted">
         {mode === "login" ? <>New here? <Link href="/signup" className="text-moss underline">Create an account</Link></>

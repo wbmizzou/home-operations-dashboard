@@ -54,6 +54,7 @@ body {
 
 h1, h2, h3, .font-display { font-family: var(--font-serif); letter-spacing: -0.01em; }
 
+@layer components {
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -71,9 +72,10 @@ h1, h2, h3, .font-display { font-family: var(--font-serif); letter-spacing: -0.0
 }
 .input:focus { outline: 2px solid var(--fern); outline-offset: 1px; }
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  align-items: center; justify-content: center; gap: .4rem;
   background: var(--moss); color: #fff; font-weight: 600;
   border-radius: 999px; padding: .75rem 1.25rem;
 }
 @media (prefers-color-scheme: dark) { .btn { color: #0f1a14; } }
 .btn:active { transform: scale(.98); }
+}

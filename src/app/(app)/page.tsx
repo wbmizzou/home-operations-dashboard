@@ -137,7 +137,7 @@ export default async function Dashboard() {
       </Section>
 
       <Link href="/projects/new" aria-label="Add project"
-        className="btn fixed bottom-20 right-4 z-30 h-14 w-14 !p-0 text-2xl shadow-lg md:hidden">＋</Link>
+        className="btn fixed flex bottom-20 right-4 z-30 h-14 w-14 !p-0 text-2xl shadow-lg md:hidden">＋</Link>
     </>
   );
 }

@@ -105,7 +105,7 @@ export default function NewProjectForm({ categories, projects }: { categories: {
       <label className="block"><Label>Notes</Label><textarea name="notes" rows={3} className="input" /></label>
 
       {error && <p className="text-sm text-berry">{error}</p>}
-      <button className="btn w-full md:w-auto" disabled={busy}>{busy ? "Saving…" : "Save project"}</button>
+      <button className="btn inline-flex w-full md:w-auto" disabled={busy}>{busy ? "Saving…" : "Save project"}</button>
     </form>
   );
 }
