@@ -18,6 +18,8 @@
   --sky1:#ffe3c2; --sky2:#fdf1d6; --sun:#ffc457; --leaf:#e0894a;
   --hill1:#bcd79a; --hill2:#8fc07a; --hill3:#6aa862; --pine1:#4d8a56; --pine2:#79ad76;
   --wall:#fff0d4; --roof:#c9566b; --door:#8b5e3c; --glow:#ffd36e; --smoke:#fff8ec;
+  --brick:#8b93a1; --brickLine:#6f7787; --roofD:#5a4a42; --shutter:#6a4630; --glass:#cfe3ea; --doorY:#f2b705; --step:#ddd7c9; --shrub:#5e9a55;
+  --lawn:#b7cb86; --straw:#d9a066; --strawLine:#b97d44; --fence:#b88955; --bin1:#4b8fd1; --bin2:#4f9d5a;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -36,6 +38,8 @@
     --sky1:#1b2f3f; --sky2:#2d4a4a; --sun:#f7e6a8; --leaf:#d98a4f;
     --hill1:#2f5a46; --hill2:#26493a; --hill3:#1e3b30; --pine1:#183a2c; --pine2:#2a5642;
     --wall:#f3dcae; --roof:#d6637a; --door:#8b5e3c; --glow:#ffcf5e; --smoke:#8fa59f;
+    --brick:#5d6574; --brickLine:#474e5c; --roofD:#3a302d; --shutter:#7a5338; --glass:#e9d58a; --doorY:#f2b705; --step:#9a9486; --shrub:#3f7a46;
+    --lawn:#2c4d3a; --straw:#8a5f38; --strawLine:#a8774a; --fence:#7a5a3a; --bin1:#3b78b0; --bin2:#3f8450;
   }
 }
 

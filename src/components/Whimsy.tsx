@@ -9,48 +9,98 @@ export function HeroScene({ className = "" }: { className?: string }) {
         </linearGradient>
       </defs>
       <rect width="400" height="130" fill="url(#sky)" />
-      {/* sun / moon */}
-      <circle cx="338" cy="30" r="14" fill="var(--sun)" opacity=".9" />
-      {/* drifting leaves */}
+      <circle cx="352" cy="26" r="13" fill="var(--sun)" opacity=".9" />
+      {/* drifting leaves + birds */}
       <g fill="var(--leaf)" opacity=".85">
-        <path d="M60 24c6-8 14-6 14-6s0 9-8 12c-4 1-6-2-6-6z" />
-        <path d="M150 12c5-6 11-5 11-5s0 7-6 9c-3 1-5-1-5-4z" transform="rotate(30 155 12)" />
-        <path d="M250 40c5-6 11-5 11-5s0 7-6 9c-3 1-5-1-5-4z" transform="rotate(-20 255 40)" />
+        <path d="M70 22c6-8 14-6 14-6s0 9-8 12c-4 1-6-2-6-6z" />
+        <path d="M210 14c5-6 11-5 11-5s0 7-6 9c-3 1-5-1-5-4z" transform="rotate(30 215 14)" />
+        <path d="M320 50c5-6 11-5 11-5s0 7-6 9c-3 1-5-1-5-4z" transform="rotate(-20 325 50)" />
       </g>
-      {/* birds */}
       <g stroke="var(--bark)" strokeWidth="1.6" fill="none" strokeLinecap="round" opacity=".6">
-        <path d="M200 28q4-5 8 0q4-5 8 0" /><path d="M222 42q3-4 6 0q3-4 6 0" />
+        <path d="M268 30q4-5 8 0q4-5 8 0" /><path d="M290 42q3-4 6 0q3-4 6 0" />
       </g>
-      {/* far hills */}
-      <path d="M0 92Q60 60 130 84T260 78T400 88V130H0Z" fill="var(--hill1)" />
-      {/* pines on far hill */}
+
+      {/* distant woods */}
+      <path d="M0 96Q70 70 140 90T270 84T400 94V130H0Z" fill="var(--hill1)" />
       <g fill="var(--pine2)">
-        <path d="M24 88l9-26 9 26z" /><path d="M42 90l7-20 7 20z" /><path d="M300 82l8-24 8 24z" /><path d="M318 84l6-17 6 17z" /><path d="M360 88l7-20 7 20z" />
+        <path d="M18 94l8-24 8 24z" /><path d="M34 96l7-19 7 19z" /><path d="M84 90l7-21 7 21z" />
+        <path d="M312 88l8-24 8 24z" /><path d="M330 92l7-20 7 20z" /><path d="M372 94l8-23 8 23z" />
       </g>
-      {/* near hill */}
-      <path d="M0 112Q90 86 190 106T400 100V130H0Z" fill="var(--hill2)" />
-      {/* cottage */}
-      <g transform="translate(150 70)">
-        <rect x="10" y="26" width="52" height="34" rx="3" fill="var(--wall)" />
-        <path d="M2 30L36 6l34 24z" fill="var(--roof)" />
-        <rect x="48" y="8" width="8" height="14" fill="var(--bark)" />
-        <rect x="29" y="38" width="14" height="22" rx="7" fill="var(--door)" />
-        <rect x="14" y="34" width="11" height="11" rx="2" fill="var(--glow)" /><path d="M19.5 34v11M14 39.5h11" stroke="var(--bark)" strokeWidth="1" />
-        <rect x="47" y="34" width="11" height="11" rx="2" fill="var(--glow)" /><path d="M52.5 34v11M47 39.5h11" stroke="var(--bark)" strokeWidth="1" />
-        {/* chimney smoke */}
-        <g fill="var(--smoke)" opacity=".7"><circle cx="52" cy="2" r="3.5" /><circle cx="56" cy="-6" r="4.5" /><circle cx="53" cy="-15" r="5.5" /></g>
+
+      {/* lawn */}
+      <path d="M0 106Q100 98 200 104T400 102V130H0Z" fill="var(--lawn)" />
+
+      {/* fence + bins */}
+      <g>
+        <rect x="318" y="86" width="44" height="22" fill="var(--fence)" />
+        <g stroke="var(--bark)" strokeWidth=".6" opacity=".5">{[324, 330, 336, 342, 348, 354].map((x) => <line key={x} x1={x} x2={x} y1="86" y2="108" />)}</g>
+        <rect x="68" y="94" width="6" height="9" rx="1" fill="var(--bin1)" />
+        <rect x="75" y="94" width="6" height="9" rx="1" fill="var(--bin2)" />
+        <rect x="82" y="94" width="6" height="9" rx="1" fill="var(--bin1)" />
       </g>
-      {/* near pines */}
-      <g fill="var(--pine1)">
-        <path d="M96 112l11-34 11 34z" /><path d="M106 114l9-27 9 27z" /><path d="M262 108l10-30 10 30z" />
+
+      {/* the house: split-level, gray brick, white upper floor, yellow door */}
+      <g transform="translate(112 46)">
+        {/* garage wing */}
+        <rect x="0" y="30" width="66" height="30" fill="var(--brick)" />
+        <g stroke="var(--brickLine)" strokeWidth=".6" opacity=".6">{[38, 46, 54].map((y) => <line key={y} x1="0" x2="66" y1={y} y2={y} />)}</g>
+        {/* long low roof over garage + porch */}
+        <path d="M-5 31L8 21H100L108 31Z" fill="var(--roofD)" />
+        {/* upper floor */}
+        <rect x="88" y="10" width="70" height="28" fill="var(--wall)" />
+        <path d="M82 13L94 3H152L164 13Z" fill="var(--roofD)" />
+        {[[97, 16], [128, 16]].map(([x, y]) => (
+          <g key={x}>
+            <rect x={x - 4} y={y} width="3.5" height="13" fill="var(--shutter)" />
+            <rect x={x + 13} y={y} width="3.5" height="13" fill="var(--shutter)" />
+            <rect x={x} y={y} width="13" height="13" rx="1" fill="var(--glass)" stroke="var(--wall)" strokeWidth="1.2" />
+            <path d={`M${x + 6.5} ${y}v13M${x} ${y + 6.5}h13`} stroke="var(--wall)" strokeWidth="1" />
+          </g>
+        ))}
+        {/* lower brick under upper floor */}
+        <rect x="88" y="38" width="70" height="22" fill="var(--brick)" />
+        <g stroke="var(--brickLine)" strokeWidth=".6" opacity=".6">{[44, 50, 56].map((y) => <line key={y} x1="88" x2="158" y1={y} y2={y} />)}</g>
+        <rect x="98" y="46" width="18" height="6" rx="1" fill="var(--glass)" stroke="var(--wall)" strokeWidth="1" />
+        <rect x="130" y="46" width="18" height="6" rx="1" fill="var(--glass)" stroke="var(--wall)" strokeWidth="1" />
+        {/* covered porch */}
+        <rect x="66" y="31" width="22" height="29" fill="var(--wall)" opacity=".92" />
+        <rect x="68" y="35" width="3" height="25" fill="var(--wall)" stroke="var(--brickLine)" strokeWidth=".4" />
+        <rect x="84" y="35" width="3" height="25" fill="var(--wall)" stroke="var(--brickLine)" strokeWidth=".4" />
+        <rect x="73" y="36" width="9" height="24" rx="1.5" fill="var(--doorY)" />
+        <circle cx="79" cy="49" r=".9" fill="var(--bark)" />
+        <circle cx="72" cy="40" r="1.6" fill="var(--glow)" /><circle cx="83" cy="40" r="1.6" fill="var(--glow)" />
+        {/* steps / walk */}
+        <path d="M70 60h14l6 6H64z" fill="var(--step)" />
+        {/* front shrubs */}
+        <g fill="var(--shrub)">
+          <ellipse cx="100" cy="60" rx="7" ry="5" /><ellipse cx="116" cy="61" rx="6" ry="4.5" /><ellipse cx="136" cy="61" rx="6.5" ry="4.8" /><ellipse cx="152" cy="61" rx="6" ry="4.5" />
+          <ellipse cx="58" cy="60" rx="8" ry="5.5" />
+        </g>
       </g>
-      <g fill="var(--bark)"><rect x="105" y="112" width="4" height="8" /><rect x="268" y="108" width="4" height="9" /></g>
-      {/* mushrooms */}
-      <Mushroom x={50} y={106} s={0.9} />
-      <Mushroom x={330} y={104} s={1.1} />
-      <Mushroom x={346} y={110} s={0.7} />
-      {/* foreground grass */}
-      <path d="M0 122Q100 112 200 120T400 118V130H0Z" fill="var(--hill3)" />
+
+      {/* the pine in front of the house */}
+      <g>
+        <rect x="163" y="98" width="6" height="18" fill="var(--bark)" />
+        <g fill="var(--pine1)">
+          <path d="M166 68l11 17h-22z" /><path d="M166 76l14 20h-28z" /><path d="M166 85l17 20h-34z" />
+        </g>
+      </g>
+
+      {/* small bare tree by the walkway */}
+      <g stroke="var(--bark)" strokeLinecap="round" fill="none">
+        <path d="M262 112V80" strokeWidth="2.6" />
+        <path d="M262 92q-9-7-14-16M262 88q9-8 15-18M262 84q-3-9-2-17M254 82q-6 1-11 6" strokeWidth="1.5" />
+      </g>
+
+      {/* pine-straw yard */}
+      <path d="M0 114Q100 108 200 113T400 110V130H0Z" fill="var(--straw)" />
+      <g stroke="var(--strawLine)" strokeWidth="1" strokeLinecap="round" opacity=".7">
+        <path d="M20 122l9-3M58 125l8-2M96 120l9 2M140 124l9-3M200 121l9 2M246 125l8-2M300 121l9-3M350 124l8 2M380 119l8-2" />
+      </g>
+      <g fill="var(--bark)" opacity=".7"><ellipse cx="44" cy="120" rx="2.4" ry="1.6" /><ellipse cx="170" cy="124" rx="2.4" ry="1.6" /><ellipse cx="320" cy="124" rx="2.4" ry="1.6" /></g>
+
+      <Mushroom x={30} y={118} s={0.8} />
+      <Mushroom x={362} y={120} s={0.9} />
     </svg>
   );
 }
