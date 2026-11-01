@@ -4,7 +4,7 @@ import { PRIORITIES, money, type Project } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
-type Params = { status?: string; category?: string; priority?: string; open?: string; q?: string };
+type Params = { status?: string; category?: string; priority?: string; open?: string; q?: string; season?: string };
 
 export default async function Projects({ searchParams }: { searchParams: Promise<Params> }) {
   const sp = await searchParams;
@@ -14,11 +14,12 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   if (sp.open) query = query.neq("status", "Complete");
   if (sp.priority) query = query.eq("priority", Number(sp.priority));
   if (sp.category) sp.category === "none" ? (query = query.is("category_id", null)) : (query = query.eq("category_id", sp.category));
+  if (sp.season) query = query.overlaps("seasons", [sp.season, "Anytime"]);
   if (sp.q) query = query.ilike("title", `%${sp.q}%`);
   const { data } = await query;
   const projects = (data ?? []) as Project[];
 
-  const filters = [sp.status, sp.open && "Open", sp.priority && `P${sp.priority}`, sp.category && "Category"].filter(Boolean);
+  const filters = [sp.status, sp.open && "Open", sp.priority && `P${sp.priority}`, sp.category && "Category", sp.season && sp.season].filter(Boolean);
 
   return (
     <>

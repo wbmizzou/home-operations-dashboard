@@ -41,6 +41,7 @@ export type Project = {
   actual_cost: number | null;
   blocked_by: string | null;
   recurrence_months: number | null;
+  completed_on: string | null;
   categories: { name: string } | null;
 };
 
@@ -54,3 +55,8 @@ export function currentSeason(d = new Date()): (typeof SEASONS)[number] {
 
 export const money = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+
+// Stages shown in the "where everything stands" pipeline (idea -> in motion).
+export const PIPELINE_STAGES = [
+  "Wishlist", "Planned", "Researching", "Getting Quotes", "Not Started", "Scheduled", "In Progress", "Waiting",
+] as const;

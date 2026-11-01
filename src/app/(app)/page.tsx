@@ -1,18 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { STATUSES, PRIORITIES, currentSeason, money, type Project } from "@/lib/constants";
+import { currentSeason, type Project } from "@/lib/constants";
+import { PipelineBar, ProgressRing, RankedBars, SeasonHeatmap, SpendChart, priorityRows, type SpendEvent } from "@/components/charts";
 
 export const dynamic = "force-dynamic";
-
-function Tile({ href, value, label, sub, tone }: { href: string; value: number | string; label: string; sub?: string; tone?: string }) {
-  return (
-    <Link href={href} className="card block p-4 transition active:scale-[0.98] hover:border-fern">
-      <div className={`font-display text-4xl leading-none ${tone ?? "text-moss"}`}>{value}</div>
-      <div className="mt-2 text-sm font-medium">{label}</div>
-      {sub && <div className="text-xs text-muted">{sub}</div>}
-    </Link>
-  );
-}
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -44,22 +35,29 @@ export default async function Dashboard() {
   const supabase = await createClient();
   const [{ data: rows }, { data: logs }] = await Promise.all([
     supabase.from("projects").select("*, categories(name)"),
-    supabase.from("service_logs").select("cost"),
+    supabase.from("service_logs").select("cost, performed_on, projects(title)"),
   ]);
   const projects = (rows ?? []) as Project[];
   const open = projects.filter((p) => p.status !== "Complete");
   const completed = projects.filter((p) => p.status === "Complete");
 
+  const serviceLogs = (logs ?? []) as unknown as { cost: number | null; performed_on: string; projects: { title: string } | null }[];
   const spent =
     completed.reduce((s, p) => s + Number(p.actual_cost ?? 0), 0) +
-    (logs ?? []).reduce((s, l) => s + Number(l.cost ?? 0), 0);
+    serviceLogs.reduce((s, l) => s + Number(l.cost ?? 0), 0);
+  const events: SpendEvent[] = [
+    ...completed
+      .filter((p) => p.completed_on && Number(p.actual_cost) > 0)
+      .map((p) => ({ date: p.completed_on!, amount: Number(p.actual_cost), label: p.title })),
+    ...serviceLogs
+      .filter((l) => Number(l.cost) > 0)
+      .map((l) => ({ date: l.performed_on, amount: Number(l.cost), label: l.projects?.title ?? "Service" })),
+  ];
 
-  const byStatus = STATUSES.map((s) => ({ s, n: projects.filter((p) => p.status === s).length }));
-
-  const catMap = new Map<string, { id: string; name: string; n: number }>();
+  const catMap = new Map<string, { key: string; label: string; n: number; href: string; muted?: boolean }>();
   for (const p of open) {
     const key = p.category_id ?? "none";
-    const e = catMap.get(key) ?? { id: key, name: p.categories?.name ?? "Uncategorized", n: 0 };
+    const e = catMap.get(key) ?? { key, label: p.categories?.name ?? "Uncategorized", n: 0, href: `/projects?open=1&category=${key}`, muted: key === "none" };
     e.n++; catMap.set(key, e);
   }
   const byCategory = [...catMap.values()].sort((a, b) => b.n - a.n);
@@ -71,6 +69,7 @@ export default async function Dashboard() {
   const upcoming = open
     .filter((p) => p.target_date && p.target_date >= today && ["Scheduled", "Planned", "In Progress"].includes(p.status))
     .sort((a, b) => a.target_date!.localeCompare(b.target_date!)).slice(0, 5);
+  const inMotion = open.filter((p) => ["Scheduled", "In Progress"].includes(p.status)).length;
 
   return (
     <>
@@ -82,40 +81,18 @@ export default async function Dashboard() {
         <Link href="/projects/new" className="btn hidden md:inline-flex">＋ Add project</Link>
       </header>
 
-      {/* Resale value */}
-      <Link href="/projects?status=Complete" className="card mt-6 block overflow-hidden p-5"
-        style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--moss) 22%, var(--surface)), var(--surface))" }}>
-        <div className="text-sm text-muted">Invested in improvements</div>
-        <div className="font-display text-5xl text-moss">{money(spent)}</div>
-        <div className="mt-1 text-xs text-muted">{completed.length} completed projects · all-time, counts toward resale value</div>
-      </Link>
-
-      <Section title="Projects by stage" hint={`${projects.length} total · ${open.length} open`}>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {byStatus.map(({ s, n }) => (
-            <Tile key={s} href={`/projects?status=${encodeURIComponent(s)}`} value={n} label={s} tone={s === "Complete" ? "text-gold" : undefined} />
-          ))}
+      <div className="mt-6 space-y-4">
+        <SpendChart events={events} total={spent} completed={completed.length} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <ProgressRing done={completed.length} open={open.length} inMotion={inMotion} />
+          <PipelineBar projects={projects} />
         </div>
-      </Section>
-
-      <Section title="Open by priority">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {PRIORITIES.map((p) => (
-            <Tile key={p.value} href={`/projects?open=1&priority=${p.value}`} value={open.filter((x) => x.priority === p.value).length}
-              label={p.label} sub={p.focus} tone={p.value === 1 ? "text-berry" : p.value === 2 ? "text-gold" : "text-moss"} />
-          ))}
+        <div className="grid gap-4 md:grid-cols-2">
+          <RankedBars title="Open by priority" hint="Tap a bar to see the projects" rows={priorityRows(open)} />
+          <RankedBars title="Open by category" hint="Longest bar = most open projects" rows={byCategory} />
         </div>
-      </Section>
-
-      <Section title="Open by category">
-        {byCategory.length === 0 ? <p className="text-sm text-muted">No open projects yet.</p> : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {byCategory.map((c) => (
-              <Tile key={c.id} href={`/projects?open=1&category=${c.id}`} value={c.n} label={c.name} tone="text-bark" />
-            ))}
-          </div>
-        )}
-      </Section>
+        <SeasonHeatmap open={open} />
+      </div>
 
       <div className="grid gap-0 md:grid-cols-2 md:gap-6">
         <Section title={`This season · ${season}`}>

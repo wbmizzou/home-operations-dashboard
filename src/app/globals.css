@@ -12,6 +12,7 @@
   --bark: #6b4f3a;
   --gold: #b8923a;
   --berry: #8a3b3b;
+  --r1:#e3ead6;--r2:#cfdcbb;--r3:#b9cd9f;--r4:#9fbd82;--r5:#88aa6c;--r6:#6f9154;--r7:#587a42;--r8:#44602f;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -25,6 +26,7 @@
     --bark: #c29a74;
     --gold: #d9b45a;
     --berry: #d98080;
+    --r1:#2f4636;--r2:#3c5a42;--r3:#4a704e;--r4:#5b8559;--r5:#6f9c63;--r6:#85b274;--r7:#9cc487;--r8:#b3d79d;
   }
 }
 
