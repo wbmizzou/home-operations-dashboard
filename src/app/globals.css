@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/* Sylvan Ramble: a woodland trail palette */
+:root {
+  --bg: #f3efe3;
+  --surface: #fbf8ef;
+  --ink: #1f2a22;
+  --muted: #6c7a6e;
+  --line: #ddd6c2;
+  --moss: #4a6b3a;
+  --fern: #7a9a5b;
+  --bark: #6b4f3a;
+  --gold: #b8923a;
+  --berry: #8a3b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1a14;
+    --surface: #17261d;
+    --ink: #ece6d3;
+    --muted: #9bab9c;
+    --line: #26382c;
+    --moss: #7fae63;
+    --fern: #a5c685;
+    --bark: #c29a74;
+    --gold: #d9b45a;
+    --berry: #d98080;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-moss: var(--moss);
+  --color-fern: var(--fern);
+  --color-bark: var(--bark);
+  --color-gold: var(--gold);
+  --color-berry: var(--berry);
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-image:
+    radial-gradient(900px 400px at 100% -10%, color-mix(in srgb, var(--fern) 18%, transparent), transparent),
+    radial-gradient(700px 400px at -10% 110%, color-mix(in srgb, var(--gold) 12%, transparent), transparent);
+  background-attachment: fixed;
+}
+
+h1, h2, h3, .font-display { font-family: var(--font-serif); letter-spacing: -0.01em; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.input:focus { outline: 2px solid var(--fern); outline-offset: 1px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  background: var(--moss); color: #fff; font-weight: 600;
+  border-radius: 999px; padding: .75rem 1.25rem;
+}
+@media (prefers-color-scheme: dark) { .btn { color: #0f1a14; } }
+.btn:active { transform: scale(.98); }
