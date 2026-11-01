@@ -1,0 +1,79 @@
+"use client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { money } from "@/lib/constants";
+import { addMonths } from "@/lib/recurrence";
+
+export type Log = { id: string; performed_on: string; cost: number | null; notes: string | null };
+
+const fmt = (d: string) => new Date(d + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+export default function ServiceLog({ projectId, months, logs }: { projectId: string; months: number | null; logs: Log[] }) {
+  const router = useRouter();
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(today);
+  const [cost, setCost] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const last = logs[0]?.performed_on;
+  const due = last && months ? addMonths(last, months) : null;
+  const overdue = !!due && due < today;
+  const total = logs.reduce((s, l) => s + Number(l.cost ?? 0), 0);
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    const { error } = await createClient().from("service_logs").insert({
+      project_id: projectId, performed_on: date, cost: cost === "" ? null : Number(cost), notes: notes.trim() || null,
+    });
+    if (error) { setError(error.message); setBusy(false); return; }
+    setCost(""); setNotes(""); setBusy(false);
+    router.refresh();
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Remove this service entry?")) return;
+    const { error } = await createClient().from("service_logs").delete().eq("id", id);
+    if (error) { setError(error.message); return; }
+    router.refresh();
+  }
+
+  return (
+    <section className="card mt-6 p-5">
+      <h2 className="text-xl">🔧 Service log</h2>
+      <p className="mt-1 text-sm text-muted">
+        {months ? `Repeats every ${months} month${months === 1 ? "" : "s"}. ` : "Set “Repeats every (months)” below to track when the next one is due. "}
+        {due ? <span className={overdue ? "font-semibold text-berry" : ""}>{overdue ? "Overdue since " : "Next due "}{fmt(due)}.</span> : logs.length === 0 ? "Nothing logged yet." : null}
+        {logs.length > 0 && <> Total spent: <b>{money(total)}</b>.</>}
+      </p>
+
+      <form onSubmit={add} className="mt-4 grid gap-3 sm:grid-cols-[10rem_8rem_1fr_auto] sm:items-end">
+        <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Date</span>
+          <input className="input" type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></label>
+        <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Cost $</span>
+          <input className="input" type="number" min="0" step="0.01" inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="0" /></label>
+        <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Notes</span>
+          <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Who did it, what was found…" /></label>
+        <button className="btn inline-flex" disabled={busy}>{busy ? "Saving…" : "Log service"}</button>
+      </form>
+      {error && <p className="mt-2 text-sm text-berry">{error}</p>}
+
+      {logs.length > 0 && (
+        <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
+          {logs.map((l) => (
+            <li key={l.id} className="flex items-start justify-between gap-3 px-4 py-3 text-sm">
+              <div className="min-w-0">
+                <div className="font-medium">{fmt(l.performed_on)}{l.cost != null && <span className="ml-2 text-moss">{money(Number(l.cost))}</span>}</div>
+                {l.notes && <div className="text-xs text-muted">{l.notes}</div>}
+              </div>
+              <button onClick={() => remove(l.id)} className="shrink-0 text-xs text-muted underline" aria-label="Remove entry">Remove</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}

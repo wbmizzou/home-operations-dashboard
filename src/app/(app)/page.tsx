@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { addMonths } from "@/lib/recurrence";
 import { currentSeason, type Project } from "@/lib/constants";
 import { Acorn, Footer, HeroScene } from "@/components/Whimsy";
 import { PipelineBar, ProgressRing, RankedBars, SeasonHeatmap, SpendChart, priorityRows, type SpendEvent } from "@/components/charts";
@@ -34,7 +35,7 @@ function ProjectRow({ p }: { p: Project }) {
           <div className="truncate font-medium">{p.title}</div>
           <div className="truncate text-xs text-muted">{p.categories?.name ?? "Uncategorized"} · {p.status}</div>
         </div>
-        <span className="shrink-0 text-xs text-muted">{p.target_date ? new Date(p.target_date + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</span>
+        <span className={`shrink-0 text-xs ${p.target_date && p.target_date < new Date().toISOString().slice(0, 10) ? "font-semibold text-berry" : "text-muted"}`}>{p.target_date && p.target_date < new Date().toISOString().slice(0, 10) ? "Overdue · " : ""}{p.target_date ? new Date(p.target_date + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</span>
       </Link>
     </li>
   );
@@ -44,13 +45,13 @@ export default async function Dashboard() {
   const supabase = await createClient();
   const [{ data: rows }, { data: logs }] = await Promise.all([
     supabase.from("projects").select("*, categories(name)"),
-    supabase.from("service_logs").select("cost, performed_on, projects(title)"),
+    supabase.from("service_logs").select("cost, performed_on, project_id, projects(title)"),
   ]);
   const projects = (rows ?? []) as Project[];
   const open = projects.filter((p) => p.status !== "Complete");
   const completed = projects.filter((p) => p.status === "Complete");
 
-  const serviceLogs = (logs ?? []) as unknown as { cost: number | null; performed_on: string; projects: { title: string } | null }[];
+  const serviceLogs = (logs ?? []) as unknown as { cost: number | null; performed_on: string; project_id: string; projects: { title: string } | null }[];
   const spent =
     completed.reduce((s, p) => s + Number(p.actual_cost ?? 0), 0) +
     serviceLogs.reduce((s, l) => s + Number(l.cost ?? 0), 0);
@@ -75,8 +76,15 @@ export default async function Dashboard() {
   const thisSeason = open.filter((p) => p.seasons.includes(season)).sort((a, b) => a.priority - b.priority).slice(0, 6);
   const p1 = open.filter((p) => p.priority === 1);
   const today = new Date().toISOString().slice(0, 10);
-  const upcoming = open
-    .filter((p) => p.target_date && p.target_date >= today && ["Scheduled", "Planned", "In Progress"].includes(p.status))
+  const lastService = new Map<string, string>();
+  for (const l of serviceLogs) if (!lastService.get(l.project_id) || l.performed_on > lastService.get(l.project_id)!) lastService.set(l.project_id, l.performed_on);
+  const soon = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10);
+  const dated: Project[] = open.map((p) => {
+    if (p.recurrence_months && lastService.has(p.id)) return { ...p, target_date: addMonths(lastService.get(p.id)!, p.recurrence_months) };
+    return p;
+  });
+  const upcoming = dated
+    .filter((p) => p.target_date && (p.recurrence_months ? p.target_date <= soon : p.target_date >= today && ["Scheduled", "Planned", "In Progress"].includes(p.status)))
     .sort((a, b) => a.target_date!.localeCompare(b.target_date!)).slice(0, 5);
   const inMotion = open.filter((p) => ["Scheduled", "In Progress"].includes(p.status)).length;
 
