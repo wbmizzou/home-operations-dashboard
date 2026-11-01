@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Acorn } from "@/components/Whimsy";
 import { PIPELINE_STAGES, PRIORITIES, SEASONS, money, type Project } from "@/lib/constants";
 
 const q = encodeURIComponent;
@@ -19,7 +20,7 @@ export function PipelineBar({ projects }: { projects: Project[] }) {
   const shown = counts.filter((c) => c.n > 0);
   const total = shown.reduce((a, c) => a + c.n, 0);
   return (
-    <Card title="Where everything stands" hint={`${total} projects in the pipeline · idea → in motion · tap to filter`}>
+    <Card title="🍃 The path so far" hint={`${total} projects in the pipeline · idea → in motion · tap to filter`}>
       <div className="flex h-9 gap-0.5 overflow-hidden rounded-xl">
         {shown.map((c) => (
           <Link key={c.s} href={`/projects?status=${q(c.s)}`} title={`${c.s}: ${c.n}`} style={{ flex: c.n, background: `var(--r${c.i + 1})` }}
@@ -46,7 +47,7 @@ export function ProgressRing({ done, open, inMotion }: { done: number; open: num
   const pct = total ? Math.round((done / total) * 100) : 0;
   const R = 50, C = 2 * Math.PI * R;
   return (
-    <Card title="How far along are we?" hint="Share of all projects complete">
+    <Card title="🌰 How far along are we?" hint="Share of all projects complete">
       <div className="flex items-center gap-5">
         <svg width="124" height="124" viewBox="0 0 124 124" role="img" aria-label={`${pct}% complete`}>
           <circle cx="62" cy="62" r={R} fill="none" stroke="var(--r1)" strokeWidth="14" />
@@ -111,7 +112,7 @@ export function SeasonHeatmap({ open }: { open: Project[] }) {
   const cell = (s: string, pr: number) => open.filter((p) => p.priority === pr && (p.seasons.includes(s) || p.seasons.includes("Anytime"))).length;
   const max = Math.max(1, ...seasons.flatMap((s) => prios.map((p) => cell(s, p.value))));
   return (
-    <Card title="What to tackle when" hint="Open projects by season and priority · darker = more · “Anytime” counts in every season">
+    <Card title="🍄 What to tackle when" hint="Open projects by season and priority · darker = more · “Anytime” counts in every season">
       <table className="w-full border-separate text-center" style={{ borderSpacing: 4 }}>
         <thead>
           <tr><th />{prios.map((p) => <th key={p.value} className="pb-1 text-[11px] font-medium text-muted">{p.label}</th>)}</tr>
@@ -151,7 +152,7 @@ export function SpendChart({ events, total, completed }: { events: SpendEvent[];
   if (sorted.length === 0) {
     body = (
       <p className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
-        No dated costs yet. Add an actual cost and completion date to a finished project and your running total will plot here.
+        The acorn jar is waiting! Add an actual cost and finish date to a completed project and your running total will grow here. 🌰
       </p>
     );
   } else {
@@ -192,9 +193,9 @@ export function SpendChart({ events, total, completed }: { events: SpendEvent[];
     );
   }
   return (
-    <Link href="/projects?status=Complete" className="card block p-4 md:p-5"
+    <Link href="/projects?status=Complete" className="card stitch block p-4 md:p-5"
       style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--moss) 18%, var(--surface)), var(--surface))" }}>
-      <div className="text-sm text-muted">Invested in improvements</div>
+      <div className="text-sm font-semibold text-muted"><Acorn size={18} /> Invested in the cottage</div>
       <div className="font-display text-5xl text-moss">{money(total)}</div>
       <div className="mb-3 mt-1 text-xs text-muted">{completed} completed projects · all-time, counts toward resale value</div>
       {body}

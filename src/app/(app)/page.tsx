@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { currentSeason, type Project } from "@/lib/constants";
+import { Acorn, Footer, HeroScene } from "@/components/Whimsy";
 import { PipelineBar, ProgressRing, RankedBars, SeasonHeatmap, SpendChart, priorityRows, type SpendEvent } from "@/components/charts";
 
 export const dynamic = "force-dynamic";
+
+const GREETING: Record<string, string> = {
+  Spring: "🌱 Buds are up in the hollow",
+  Summer: "☀️ Long, golden days at the cottage",
+  Fall: "🍂 Acorn season in the hollow",
+  Winter: "❄️ Cozy by the chimney",
+  Anytime: "Welcome home",
+};
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -73,12 +82,15 @@ export default async function Dashboard() {
 
   return (
     <>
-      <header className="flex items-end justify-between">
-        <div>
-          <p className="text-sm text-muted">{season} on the homestead</p>
-          <h1 className="text-3xl text-moss md:text-4xl">Dashboard</h1>
+      <header className="card relative overflow-hidden !border-0 p-0">
+        <HeroScene className="absolute inset-0 h-full w-full" />
+        <div className="relative flex items-start justify-between gap-3 p-5 pb-24 md:pb-28">
+          <div>
+            <p className="text-sm font-semibold" style={{ color: "var(--bark)" }}>{GREETING[season]}</p>
+            <h1 className="text-3xl md:text-4xl" style={{ color: "var(--ink)" }}>Home Hollow</h1>
+          </div>
+          <Link href="/projects/new" className="btn hidden md:inline-flex">＋ Add project</Link>
         </div>
-        <Link href="/projects/new" className="btn hidden md:inline-flex">＋ Add project</Link>
       </header>
 
       <div className="mt-6 space-y-4">
@@ -95,23 +107,25 @@ export default async function Dashboard() {
       </div>
 
       <div className="grid gap-0 md:grid-cols-2 md:gap-6">
-        <Section title={`This season · ${season}`}>
+        <Section title={`Chores for the ${season.toLowerCase()}`}>
           <ul className="card divide-y divide-line">
             {thisSeason.length ? thisSeason.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing tagged for {season}.</li>}
           </ul>
         </Section>
-        <Section title="Protect the house · P1" hint={`${p1.length} open`}>
+        <Section title="🛡️ Protect the house" hint={`${p1.length} open`}>
           <ul className="card divide-y divide-line">
-            {p1.length ? p1.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">No open P1s. 🌿</li>}
+            {p1.length ? p1.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">All snug — nothing urgent in the burrow. 🌿</li>}
           </ul>
         </Section>
       </div>
 
-      <Section title="Coming up">
+      <Section title="🗓️ Coming up next">
         <ul className="card divide-y divide-line">
-          {upcoming.length ? upcoming.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing scheduled with a date.</li>}
+          {upcoming.length ? upcoming.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing on the calendar. Time for tea? ☕</li>}
         </ul>
       </Section>
+
+      <Footer />
 
       <Link href="/projects/new" aria-label="Add project"
         className="btn fixed flex bottom-20 right-4 z-30 h-14 w-14 !p-0 text-2xl shadow-lg md:hidden">＋</Link>

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { Cottage, Leaf } from "@/components/Whimsy";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -31,18 +32,18 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6">
       <div className="mb-8 text-center">
-        <div className="text-5xl">🌲</div>
-        <h1 className="mt-3 text-3xl text-moss">Home Operations</h1>
-        <p className="mt-1 text-sm text-muted">Projects, improvements &amp; maintenance</p>
+        <div className="flex justify-center"><Cottage size={88} /></div>
+        <h1 className="mt-3 text-3xl text-moss">Home Hollow</h1>
+        <p className="mt-1 text-sm text-muted">Our cozy home for projects &amp; upkeep</p>
       </div>
       <form onSubmit={submit} className="card space-y-3 p-5">
-        <h2 className="text-xl">{mode === "login" ? "Welcome back" : "Create your account"}</h2>
+        <h2 className="text-xl">{mode === "login" ? "Welcome home 🍂" : "Join the hollow 🌱"}</h2>
         <input className="input" type="email" required placeholder="Email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className="input" type="password" required minLength={8} placeholder="Password (8+ characters)"
           autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <p className="text-sm text-berry">{error}</p>}
         {info && <p className="text-sm text-moss">{info}</p>}
-        <button className="btn inline-flex w-full" disabled={busy}>{busy ? "…" : mode === "login" ? "Log in" : "Sign up"}</button>
+        <button className="btn inline-flex w-full" disabled={busy}>{busy ? "…" : mode === "login" ? "Step inside" : "Sign up"}</button>
       </form>
       <p className="mt-4 text-center text-sm text-muted">
         {mode === "login" ? <>New here? <Link href="/signup" className="text-moss underline">Create an account</Link></>

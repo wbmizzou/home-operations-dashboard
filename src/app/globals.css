@@ -2,31 +2,40 @@
 
 /* Sylvan Ramble: a woodland trail palette */
 :root {
-  --bg: #f3efe3;
-  --surface: #fbf8ef;
-  --ink: #1f2a22;
-  --muted: #6c7a6e;
-  --line: #ddd6c2;
-  --moss: #4a6b3a;
-  --fern: #7a9a5b;
-  --bark: #6b4f3a;
-  --gold: #b8923a;
-  --berry: #8a3b3b;
-  --r1:#e3ead6;--r2:#cfdcbb;--r3:#b9cd9f;--r4:#9fbd82;--r5:#88aa6c;--r6:#6f9154;--r7:#587a42;--r8:#44602f;
+  --bg: #f8f0dc;
+  --surface: #fffaf0;
+  --ink: #3a2c22;
+  --muted: #8a7767;
+  --line: #ecdfc2;
+  --moss: #5a8a45;
+  --fern: #8fb86a;
+  --bark: #8b5e3c;
+  --gold: #e0a23a;
+  --berry: #c9566b;
+  --cream: #fff6e2;
+  --r1:#ece9cf;--r2:#d8e3b8;--r3:#c0d79b;--r4:#a6c77f;--r5:#8db866;--r6:#74a553;--r7:#5a8a45;--r8:#46703a;
+  /* scene */
+  --sky1:#ffe3c2; --sky2:#fdf1d6; --sun:#ffc457; --leaf:#e0894a;
+  --hill1:#bcd79a; --hill2:#8fc07a; --hill3:#6aa862; --pine1:#4d8a56; --pine2:#79ad76;
+  --wall:#fff0d4; --roof:#c9566b; --door:#8b5e3c; --glow:#ffd36e; --smoke:#fff8ec;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f1a14;
-    --surface: #17261d;
-    --ink: #ece6d3;
-    --muted: #9bab9c;
-    --line: #26382c;
-    --moss: #7fae63;
-    --fern: #a5c685;
-    --bark: #c29a74;
-    --gold: #d9b45a;
-    --berry: #d98080;
-    --r1:#2f4636;--r2:#3c5a42;--r3:#4a704e;--r4:#5b8559;--r5:#6f9c63;--r6:#85b274;--r7:#9cc487;--r8:#b3d79d;
+    --bg: #14201a;
+    --surface: #1d2d24;
+    --ink: #f4e9d2;
+    --muted: #b3a58d;
+    --line: #2e4235;
+    --moss: #8fc474;
+    --fern: #b3d98f;
+    --bark: #d3a77c;
+    --gold: #f0bd55;
+    --berry: #e3788c;
+    --cream: #fff3d9;
+    --r1:#2c4234;--r2:#38573f;--r3:#456e4b;--r4:#558559;--r5:#67996a;--r6:#7fb27a;--r7:#98c88b;--r8:#b3dba0;
+    --sky1:#1b2f3f; --sky2:#2d4a4a; --sun:#f7e6a8; --leaf:#d98a4f;
+    --hill1:#2f5a46; --hill2:#26493a; --hill3:#1e3b30; --pine1:#183a2c; --pine2:#2a5642;
+    --wall:#f3dcae; --roof:#d6637a; --door:#8b5e3c; --glow:#ffcf5e; --smoke:#8fa59f;
   }
 }
 
@@ -41,27 +50,32 @@
   --color-bark: var(--bark);
   --color-gold: var(--gold);
   --color-berry: var(--berry);
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-serif: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", "Varela Round", "Trebuchet MS", system-ui, sans-serif;
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", system-ui, -apple-system, "Segoe UI", sans-serif;
   background-image:
     radial-gradient(900px 400px at 100% -10%, color-mix(in srgb, var(--fern) 18%, transparent), transparent),
     radial-gradient(700px 400px at -10% 110%, color-mix(in srgb, var(--gold) 12%, transparent), transparent);
   background-attachment: fixed;
 }
+body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:-1; opacity:.5;
+  background-image: radial-gradient(color-mix(in srgb, var(--fern) 22%, transparent) 1.5px, transparent 1.6px); background-size: 26px 26px; }
 
-h1, h2, h3, .font-display { font-family: var(--font-serif); letter-spacing: -0.01em; }
+.stitch { outline: 2px dashed color-mix(in srgb, var(--bark) 35%, transparent); outline-offset: -8px; }
+
+h1, h2, h3, .font-display { font-family: var(--font-serif); font-weight: 700; letter-spacing: -0.005em; }
 
 @layer components {
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 1.25rem;
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+  border-radius: 1.6rem;
+  border-width: 2px;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--bark) 14%, transparent);
 }
 .input {
   width: 100%;

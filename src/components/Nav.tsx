@@ -3,9 +3,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const ITEMS = [
-  { href: "/", label: "Dashboard", icon: "🌲" },
-  { href: "/projects", label: "Projects", icon: "🪵" },
-  { href: "/projects/new", label: "Add", icon: "＋" },
+  { href: "/", label: "Dashboard", icon: "🏡" },
+  { href: "/projects", label: "Projects", icon: "🍂" },
+  { href: "/projects/new", label: "Add", icon: "🌱" },
 ];
 
 export default function Nav() {
@@ -15,7 +15,7 @@ export default function Nav() {
     <>
       {/* Desktop side nav */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-line bg-surface/70 p-5 backdrop-blur md:flex">
-        <div className="font-display mb-8 text-2xl text-moss">Home<br />Operations</div>
+        <div className="font-display mb-8 text-2xl text-moss">🌰 Home<br />Hollow</div>
         <nav className="flex flex-col gap-1">
           {ITEMS.map((i) => (
             <Link key={i.href} href={i.href}
