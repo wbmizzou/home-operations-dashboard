@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { Cottage, Leaf } from "@/components/Whimsy";
+import InstallHint from "@/components/InstallHint";
+import { Cottage } from "@/components/Whimsy";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -49,6 +50,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {mode === "login" ? <>New here? <Link href="/signup" className="text-moss underline">Create an account</Link></>
           : <>Have an account? <Link href="/login" className="text-moss underline">Log in</Link></>}
       </p>
+      <InstallHint />
     </div>
   );
 }

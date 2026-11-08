@@ -71,6 +71,10 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 
 .stitch { outline: 2px dashed color-mix(in srgb, var(--bark) 35%, transparent); outline-offset: -8px; }
 
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+a, button, summary, select, label { touch-action: manipulation; }
+body { overscroll-behavior-y: none; }
+
 h1, h2, h3, .font-display { font-family: var(--font-serif); font-weight: 700; letter-spacing: -0.005em; }
 
 @layer components {

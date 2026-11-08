@@ -103,18 +103,18 @@ export default async function Dashboard() {
 
       <div className="mt-6 space-y-4">
         <SpendChart events={events} total={spent} completed={completed.length} />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           <ProgressRing done={completed.length} open={open.length} inMotion={inMotion} />
           <PipelineBar projects={projects} />
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           <RankedBars title="Open by priority" hint="Tap a bar to see the projects" rows={priorityRows(open)} />
           <RankedBars title="Open by category" hint="Longest bar = most open projects" rows={byCategory} />
         </div>
         <SeasonHeatmap open={open} />
       </div>
 
-      <div className="grid gap-0 md:grid-cols-2 md:gap-6">
+      <div className="grid gap-0 lg:grid-cols-2 lg:gap-6">
         <Section title={`Chores for the ${season.toLowerCase()}`}>
           <ul className="card divide-y divide-line">
             {thisSeason.length ? thisSeason.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing tagged for {season}.</li>}
@@ -136,7 +136,7 @@ export default async function Dashboard() {
       <Footer />
 
       <Link href="/projects/new" aria-label="Add project"
-        className="btn fixed flex bottom-20 right-4 z-30 h-14 w-14 !p-0 text-2xl shadow-lg md:hidden">＋</Link>
+        className="btn fixed flex bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 h-14 w-14 !p-0 text-2xl shadow-lg md:hidden">＋</Link>
     </>
   );
 }

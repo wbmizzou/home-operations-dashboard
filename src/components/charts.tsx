@@ -83,7 +83,7 @@ export function RankedBars({ title, hint, rows }: { title: string; hint?: string
         <ul className="space-y-1.5">
           {rows.map((r) => (
             <li key={r.key}>
-              <Link href={r.href} className="grid grid-cols-[10.5rem_1fr_1.25rem] items-center gap-2 py-0.5 text-[13px] md:text-sm">
+              <Link href={r.href} className="grid grid-cols-[10.5rem_1fr_1.25rem] items-center gap-2 py-0.5 text-[13px] md:grid-cols-[14rem_1fr_1.25rem] md:text-sm">
                 <span className="truncate">{r.label}</span>
                 <span className="h-3.5 rounded-r-full" style={{ background: "var(--r1)" }}>
                   <span className="block h-full rounded-r-full" style={{ width: `${(r.n / max) * 100}%`, minWidth: r.n ? 6 : 0, background: r.muted ? "var(--muted)" : "var(--r7)", opacity: r.muted ? 0.5 : 1 }} />
