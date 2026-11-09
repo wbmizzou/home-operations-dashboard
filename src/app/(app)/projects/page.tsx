@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import FilterBar from "@/components/FilterBar";
+import ProjectListItem from "@/components/ProjectListItem";
 import SearchBox from "@/components/SearchBox";
 import { createClient } from "@/lib/supabase/server";
-import { PRIORITIES, money, type Project } from "@/lib/constants";
+import type { Project } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -69,27 +70,15 @@ export default async function Projects({ searchParams }: { searchParams: Promise
       <Suspense><FilterBar categories={(await supabase.from("categories").select("id, name").order("name")).data ?? []} /></Suspense>
 
       <ul className="card mt-5 divide-y divide-line">
-        {projects.map((p) => (
-          <li key={p.id}>
-            <Link href={`/projects/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0">
-                <div className="truncate font-medium">{p.title}</div>
-                <div className="truncate text-xs text-muted">
-                  {p.categories?.name ?? "Uncategorized"} · {p.status} · {p.owner ?? "Unassigned"}
-                  {p.target_date ? ` · ${p.target_date}` : p.target_note ? ` · ${p.target_note}` : ""}
-                </div>
-              </div>
-              <div className="shrink-0 text-right">
-                <div className={`text-sm font-semibold ${p.priority === 1 ? "text-berry" : p.priority === 2 ? "text-gold" : "text-moss"}`}>
-                  {PRIORITIES.find((x) => x.value === p.priority)?.label}
-                </div>
-                {(p.actual_cost ?? p.quoted_cost ?? p.estimated_cost) != null && (
-                  <div className="text-xs text-muted">{money(Number(p.actual_cost ?? p.quoted_cost ?? p.estimated_cost))}</div>
-                )}
-              </div>
-            </Link>
-          </li>
-        ))}
+        {projects.map((p) => {
+          const cost = p.actual_cost ?? p.quoted_cost ?? p.estimated_cost;
+          return (
+            <ProjectListItem key={p.id} p={{
+              id: p.id, title: p.title, categoryName: p.categories?.name ?? null, status: p.status, owner: p.owner, priority: p.priority,
+              when: p.target_date ?? p.target_note ?? null, cost: cost != null ? Number(cost) : null,
+            }} />
+          );
+        })}
         {projects.length === 0 && <li className="p-6 text-center text-sm text-muted">Nothing found under these leaves. 🍂 Try fewer words or clear the filters.</li>}
       </ul>
     </>
