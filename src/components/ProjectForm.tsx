@@ -6,6 +6,7 @@ import { DIY_HIRE, OWNERS, PRIORITIES, SEASONS, STATUSES, type Project } from "@
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? null : Number(v));
 const str = (v: FormDataEntryValue | null) => (v === null || String(v).trim() === "" ? null : String(v).trim());
+const NEW_CATEGORY = "__new__";
 const today = () => new Date().toISOString().slice(0, 10);
 
 type Props = {
@@ -19,6 +20,7 @@ export default function ProjectForm({ categories, projects, initial }: Props) {
   const [seasons, setSeasons] = useState<string[]>(initial?.seasons ?? []);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [catChoice, setCatChoice] = useState(initial?.category_id ?? "");
   const editing = !!initial;
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -27,10 +29,12 @@ export default function ProjectForm({ categories, projects, initial }: Props) {
     const f = new FormData(e.currentTarget);
     const supabase = createClient();
 
-    // Free-text category: reuse an existing one (case-insensitive) or create it.
+    // Category comes from the dropdown. "New category…" reveals a text box; reuse a
+    // matching name (case-insensitive) or create it.
     let category_id: string | null = null;
-    const catName = str(f.get("category"));
-    if (catName) {
+    if (catChoice === NEW_CATEGORY) {
+      const catName = str(f.get("new_category"));
+      if (!catName) { setError("Type a name for the new category, or pick one from the list."); setBusy(false); return; }
       const existing = categories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
       if (existing) category_id = existing.id;
       else {
@@ -38,6 +42,8 @@ export default function ProjectForm({ categories, projects, initial }: Props) {
         if (error) { setError(error.message); setBusy(false); return; }
         category_id = data.id;
       }
+    } else if (catChoice) {
+      category_id = catChoice;
     }
 
     const status = String(f.get("status"));
@@ -82,17 +88,24 @@ export default function ProjectForm({ categories, projects, initial }: Props) {
   }
 
   const Label = ({ children }: { children: React.ReactNode }) => <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
-  const catDefault = categories.find((c) => c.id === initial?.category_id)?.name ?? "";
 
   return (
     <form onSubmit={submit} className="card mt-6 space-y-4 p-5">
       <label className="block"><Label>Project</Label><input name="title" required defaultValue={initial?.title} className="input" placeholder="e.g. Fix carport gutter flooding" /></label>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block"><Label>Category</Label>
-          <input name="category" list="cats" defaultValue={catDefault} className="input" placeholder="Pick or type a new one" />
-          <datalist id="cats">{categories.map((c) => <option key={c.id} value={c.name} />)}</datalist>
-        </label>
+        <div>
+          <label className="block"><Label>Category</Label>
+            <select className="input" value={catChoice} onChange={(e) => setCatChoice(e.target.value)}>
+              <option value="">No category</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              <option value={NEW_CATEGORY}>＋ New category…</option>
+            </select>
+          </label>
+          {catChoice === NEW_CATEGORY && (
+            <input name="new_category" className="input mt-2" placeholder="Name the new category" autoFocus />
+          )}
+        </div>
         <label className="block"><Label>Status</Label>
           <select name="status" className="input" defaultValue={initial?.status ?? "Not Started"}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select></label>
         <label className="block"><Label>Priority</Label>
