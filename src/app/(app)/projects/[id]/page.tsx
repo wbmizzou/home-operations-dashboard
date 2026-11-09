@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProjectForm from "@/components/ProjectForm";
-import CompleteProject from "@/components/CompleteProject";
+import EditToolbar from "@/components/EditToolbar";
 import ServiceLog from "@/components/ServiceLog";
 import { isRecurring } from "@/lib/recurrence";
 import type { Project } from "@/lib/constants";
@@ -23,14 +23,11 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
   return (
     <>
       <Link href="/projects" className="text-sm text-muted">← All projects</Link>
-      <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-3xl text-moss">{p.status === "Complete" ? "✅ " : ""}{p.title}</h1>
-        {p.status !== "Complete" && (
-          <CompleteProject id={p.id} title={p.title} defaultCost={p.actual_cost ?? p.quoted_cost ?? p.estimated_cost} recurring={isRecurring(p)} />
-        )}
-      </div>
+      <h1 className="mt-1 text-3xl text-moss">{p.status === "Complete" ? "✅ " : ""}{p.title}</h1>
+      <EditToolbar id={p.id} title={p.title} defaultCost={p.actual_cost ?? p.quoted_cost ?? p.estimated_cost}
+        canComplete={p.status !== "Complete" && !isRecurring(p)} formId="project-form" />
       {isRecurring(p) && p.status !== "Complete" && <ServiceLog projectId={p.id} months={p.recurrence_months} logs={logs ?? []} />}
-      <ProjectForm categories={cats ?? []} projects={others ?? []} initial={p} />
+      <ProjectForm formId="project-form" hideSubmit categories={cats ?? []} projects={others ?? []} initial={p} />
     </>
   );
 }

@@ -3,9 +3,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function CompleteProject({ id, title, defaultCost, recurring }: { id: string; title: string; defaultCost: number | null; recurring: boolean }) {
+export default function CompleteProject({ id, title, defaultCost, open, onClose }: { id: string; title: string; defaultCost: number | null; open: boolean; onClose: () => void }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [cost, setCost] = useState(defaultCost != null ? String(defaultCost) : "");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [busy, setBusy] = useState(false);
@@ -20,8 +19,7 @@ export default function CompleteProject({ id, title, defaultCost, recurring }: {
     router.push("/"); router.refresh();
   }
 
-  if (recurring) return null;
-  if (!open) return <button onClick={() => setOpen(true)} className="btn inline-flex">🌰 Mark complete</button>;
+  if (!open) return null;
   return (
     <div className="card stitch space-y-3 p-5">
       <h2 className="text-lg">Wrap up “{title}”</h2>
@@ -34,7 +32,7 @@ export default function CompleteProject({ id, title, defaultCost, recurring }: {
       {error && <p className="text-sm text-berry">{error}</p>}
       <div className="flex items-center gap-3">
         <button onClick={save} disabled={busy} className="btn inline-flex">{busy ? "Saving…" : "Save as complete"}</button>
-        <button onClick={() => setOpen(false)} className="text-sm text-muted underline">Cancel</button>
+        <button onClick={onClose} className="text-sm text-muted underline">Cancel</button>
       </div>
     </div>
   );

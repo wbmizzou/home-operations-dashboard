@@ -10,12 +10,14 @@ const NEW_CATEGORY = "__new__";
 const today = () => new Date().toISOString().slice(0, 10);
 
 type Props = {
+  formId?: string;
+  hideSubmit?: boolean;
   categories: { id: string; name: string }[];
   projects: { id: string; title: string }[];
   initial?: Project;
 };
 
-export default function ProjectForm({ categories, projects, initial }: Props) {
+export default function ProjectForm({ categories, projects, initial, formId, hideSubmit }: Props) {
   const router = useRouter();
   const [seasons, setSeasons] = useState<string[]>(initial?.seasons ?? []);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +27,7 @@ export default function ProjectForm({ categories, projects, initial }: Props) {
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true); setError(null);
     const f = new FormData(e.currentTarget);
     const supabase = createClient();
@@ -90,7 +93,10 @@ export default function ProjectForm({ categories, projects, initial }: Props) {
   const Label = ({ children }: { children: React.ReactNode }) => <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
 
   return (
-    <form onSubmit={submit} className="card mt-6 space-y-4 p-5">
+    <form id={formId} onSubmit={submit} className="card mt-4 space-y-4 p-5">
+      {error && (
+        <p role="alert" className="sticky top-16 z-20 rounded-xl border border-berry bg-surface p-3 text-sm text-berry shadow">{error}</p>
+      )}
       <label className="block"><Label>Project</Label><input name="title" required defaultValue={initial?.title} className="input" placeholder="e.g. Fix carport gutter flooding" /></label>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -153,9 +159,8 @@ export default function ProjectForm({ categories, projects, initial }: Props) {
         <input name="recurrence_months" type="number" min="1" inputMode="numeric" defaultValue={initial?.recurrence_months ?? ""} className="input" placeholder="e.g. 12" /></label>
       <label className="block"><Label>Notes</Label><textarea name="notes" rows={3} defaultValue={initial?.notes ?? ""} className="input" /></label>
 
-      {error && <p className="text-sm text-berry">{error}</p>}
       <div className="flex flex-wrap items-center gap-3">
-        <button className="btn inline-flex w-full md:w-auto" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Save project"}</button>
+        {!hideSubmit && <button className="btn inline-flex w-full md:w-auto" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Save project"}</button>}
         {editing && <button type="button" onClick={remove} disabled={busy} className="text-sm text-berry underline">Delete project</button>}
       </div>
     </form>
