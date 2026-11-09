@@ -19,7 +19,10 @@ export default async function Projects({ searchParams }: { searchParams: Promise
 
   const status = list(sp.status);
   if (status.length) query = query.in("status", status);
-  if (sp.open) query = query.neq("status", "Complete");
+  // Default view = projects that aren't finished. `open=0` shows everything, and
+  // asking for Complete explicitly (e.g. the dashboard) also shows completed ones.
+  const includeCompleted = sp.open === "0" || status.includes("Complete");
+  if (!includeCompleted) query = query.neq("status", "Complete");
 
   const priorities = list(sp.priority).map(Number).filter((n) => n >= 1 && n <= 5);
   if (priorities.length) query = query.in("priority", priorities);
@@ -55,14 +58,17 @@ export default async function Projects({ searchParams }: { searchParams: Promise
 
   const { data } = await query;
   const projects = (data ?? []) as Project[];
-  const filtered = !!(status.length || sp.open || priorities.length || cats.length || owners.length || seasons.length || term);
+  const filtered = !!(status.length || sp.open === "0" || priorities.length || cats.length || owners.length || seasons.length || term);
 
   return (
     <>
       <header className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl text-moss">Projects</h1>
-          <p className="text-sm text-muted">{projects.length} shown{term ? ` · “${term}”` : ""}</p>
+          <p className="text-sm text-muted">
+            {projects.length} {includeCompleted ? "shown" : "open"}{term ? ` · “${term}”` : ""}
+            {!includeCompleted && <> · <Link href={`/projects?${new URLSearchParams({ ...Object.fromEntries(Object.entries(sp).filter(([, v]) => v !== undefined) as [string, string][]), open: "0" })}`} className="underline">include completed</Link></>}
+          </p>
         </div>
         {filtered && <Link href="/projects" className="text-sm text-moss underline">Clear all</Link>}
       </header>

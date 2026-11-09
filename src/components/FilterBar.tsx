@@ -45,9 +45,10 @@ export default function FilterBar({ categories }: { categories: { id: string; na
 
   const applied = [
     ...groups.flatMap((g) => list(params.get(g.key)).map((v) => ({ key: g.key, value: v, label: g.options.find((o) => o.value === v)?.label.split(" · ")[0] ?? v }))),
-    ...(params.get("open") ? [{ key: "open", value: "1", label: "Open only" }] : []),
+    ...(params.get("open") === "0" ? [{ key: "open", value: "0", label: "Including completed" }] : []),
   ];
   const sort = params.get("sort") ?? "priority";
+  const openOnly = params.get("open") !== "0" && !list(params.get("status")).includes("Complete");
 
   return (
     <div className="mt-3">
@@ -85,7 +86,13 @@ export default function FilterBar({ categories }: { categories: { id: string; na
             );
           })}
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={!!params.get("open")} onChange={(e) => update((sp) => { if (e.target.checked) sp.set("open", "1"); else sp.delete("open"); })} />
+            <input type="checkbox" checked={openOnly} onChange={(e) => update((sp) => {
+              if (e.target.checked) {
+                sp.delete("open");
+                const rest = list(sp.get("status")).filter((x) => x !== "Complete");
+                if (rest.length) sp.set("status", rest.join(",")); else sp.delete("status");
+              } else sp.set("open", "0");
+            })} />
             Open projects only (hide Complete)
           </label>
         </div>
