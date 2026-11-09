@@ -61,3 +61,9 @@ export const money = (n: number) =>
 export const PIPELINE_STAGES = [
   "Wishlist", "Planned", "Researching", "Getting Quotes", "Not Started", "Scheduled", "In Progress", "Waiting",
 ] as const;
+
+// Order used when sorting the project list by status: work in motion first, ideas and finished work last.
+export const STATUS_SORT_ORDER = [
+  "In Progress", "Scheduled", "Waiting", "Getting Quotes", "Researching", "Planned",
+  "Not Started", "Recurring", "Wishlist", "Complete",
+] as const;

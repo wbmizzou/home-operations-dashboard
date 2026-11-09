@@ -4,6 +4,7 @@ import { useState } from "react";
 import { OWNERS, PRIORITIES, STATUSES } from "@/lib/constants";
 
 export const SORTS = [
+  { value: "status", label: "Status" },
   { value: "priority", label: "Priority" },
   { value: "target", label: "Target date" },
   { value: "newest", label: "Newest first" },
@@ -47,7 +48,7 @@ export default function FilterBar({ categories }: { categories: { id: string; na
     ...groups.flatMap((g) => list(params.get(g.key)).map((v) => ({ key: g.key, value: v, label: g.options.find((o) => o.value === v)?.label.split(" · ")[0] ?? v }))),
     ...(params.get("open") === "0" ? [{ key: "open", value: "0", label: "Including completed" }] : []),
   ];
-  const sort = params.get("sort") ?? "priority";
+  const sort = params.get("sort") ?? "status";
   const openOnly = params.get("open") !== "0" && !list(params.get("status")).includes("Complete");
 
   return (
@@ -59,7 +60,7 @@ export default function FilterBar({ categories }: { categories: { id: string; na
         </button>
         <label className="ml-auto flex items-center gap-2 text-sm text-muted">
           Sort
-          <select value={sort} onChange={(e) => update((sp) => { if (e.target.value === "priority") sp.delete("sort"); else sp.set("sort", e.target.value); })}
+          <select value={sort} onChange={(e) => update((sp) => { if (e.target.value === "status") sp.delete("sort"); else sp.set("sort", e.target.value); })}
             className="input !w-auto !rounded-full !py-2 !text-sm">
             {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>

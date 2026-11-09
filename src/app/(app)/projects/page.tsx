@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
 import FilterBar from "@/components/FilterBar";
 import ProjectListItem from "@/components/ProjectListItem";
 import SearchBox from "@/components/SearchBox";
 import { createClient } from "@/lib/supabase/server";
-import type { Project } from "@/lib/constants";
+import { STATUS_SORT_ORDER, type Project } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -53,11 +53,17 @@ export default async function Projects({ searchParams }: { searchParams: Promise
     case "newest": query = query.order("created_at", { ascending: false }); break;
     case "updated": query = query.order("updated_at", { ascending: false }); break;
     case "name": query = query.order("title"); break;
-    default: query = query.order("priority").order("title");
+    default: query = query.order("priority").order("title"); // "priority", and the base order for "status"
   }
 
   const { data } = await query;
-  const projects = (data ?? []) as Project[];
+  let projects = (data ?? []) as Project[];
+  // Default sort is by status (a custom order the database can't express), then priority, then name.
+  const byStatus = !sp.sort || sp.sort === "status";
+  if (byStatus) {
+    const rank = (st: string) => { const i = STATUS_SORT_ORDER.indexOf(st as (typeof STATUS_SORT_ORDER)[number]); return i === -1 ? 99 : i; };
+    projects = [...projects].sort((a, b) => rank(a.status) - rank(b.status) || a.priority - b.priority || a.title.localeCompare(b.title));
+  }
   const filtered = !!(status.length || sp.open === "0" || priorities.length || cats.length || owners.length || seasons.length || term);
 
   return (
@@ -76,13 +82,21 @@ export default async function Projects({ searchParams }: { searchParams: Promise
       <Suspense><FilterBar categories={(await supabase.from("categories").select("id, name").order("name")).data ?? []} /></Suspense>
 
       <ul className="card mt-5 divide-y divide-line overflow-hidden">
-        {projects.map((p) => {
+        {projects.map((p, i) => {
           const cost = p.actual_cost ?? p.quoted_cost ?? p.estimated_cost;
+          const header = byStatus && (i === 0 || projects[i - 1].status !== p.status);
           return (
-            <ProjectListItem key={p.id} p={{
-              id: p.id, title: p.title, categoryName: p.categories?.name ?? null, status: p.status, owner: p.owner, priority: p.priority,
-              when: p.target_date ?? p.target_note ?? null, cost: cost != null ? Number(cost) : null,
-            }} />
+            <Fragment key={p.id}>
+              {header && (
+                <li className="bg-moss/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+                  {p.status} · {projects.filter((x) => x.status === p.status).length}
+                </li>
+              )}
+              <ProjectListItem p={{
+                id: p.id, title: p.title, categoryName: p.categories?.name ?? null, status: p.status, owner: p.owner, priority: p.priority,
+                when: p.target_date ?? p.target_note ?? null, cost: cost != null ? Number(cost) : null,
+              }} />
+            </Fragment>
           );
         })}
         {projects.length === 0 && <li className="p-6 text-center text-sm text-muted">Nothing found under these leaves. 🍂 Try fewer words or clear the filters.</li>}
