@@ -75,7 +75,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
       <div className="mt-4"><Suspense><SearchBox /></Suspense></div>
       <Suspense><FilterBar categories={(await supabase.from("categories").select("id, name").order("name")).data ?? []} /></Suspense>
 
-      <ul className="card mt-5 divide-y divide-line">
+      <ul className="card mt-5 divide-y divide-line overflow-hidden">
         {projects.map((p) => {
           const cost = p.actual_cost ?? p.quoted_cost ?? p.estimated_cost;
           return (
