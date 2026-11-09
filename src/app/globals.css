@@ -74,6 +74,7 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 a, button, summary, select, label { touch-action: manipulation; }
 body { overscroll-behavior-y: none; }
+label.block, fieldset { min-width: 0; }
 
 h1, h2, h3, .font-display { font-family: var(--font-serif); font-weight: 700; letter-spacing: -0.005em; }
 
@@ -95,6 +96,16 @@ h1, h2, h3, .font-display { font-family: var(--font-serif); font-weight: 700; le
   color: var(--ink);
 }
 .input:focus { outline: 2px solid var(--fern); outline-offset: 1px; }
+/* iOS Safari gives date inputs their own intrinsic width and centered text, which makes
+   them overflow the card. Force them to behave like the other fields. */
+.input { min-width: 0; max-width: 100%; box-sizing: border-box; }
+input.input[type="date"] {
+  -webkit-appearance: none; appearance: none;
+  display: block; width: 100%; min-width: 0; max-width: 100%;
+  min-height: 3.05rem; text-align: left;
+}
+input.input[type="date"]::-webkit-date-and-time-value { text-align: left; min-height: 1.4em; }
+input.input[type="date"]::-webkit-datetime-edit { padding: 0; }
 .btn {
   align-items: center; justify-content: center; gap: .4rem;
   background: var(--moss); color: #fff; font-weight: 600;
