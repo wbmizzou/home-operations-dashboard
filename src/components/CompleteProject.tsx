@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/lib/toast";
 
 export default function CompleteProject({ id, title, defaultCost, open, onClose }: { id: string; title: string; defaultCost: number | null; open: boolean; onClose: () => void }) {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function CompleteProject({ id, title, defaultCost, open, onClose 
       status: "Complete", completed_on: date, actual_cost: cost === "" ? null : Number(cost),
     }).eq("id", id);
     if (error) { setError(error.message); setBusy(false); return; }
+    toast(`“${title}” marked complete ✓`);
     router.push("/"); router.refresh();
   }
 

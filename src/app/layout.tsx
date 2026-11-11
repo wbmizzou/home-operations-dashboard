@@ -22,7 +22,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Apply a saved Light/Dark choice before first paint, so there's no flash. */}
+        <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('hh-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}" }} />
+      </head>
       <body className="min-h-dvh antialiased">{children}<RegisterSW /></body>
     </html>
   );

@@ -1,7 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { softDeleteProject } from "@/lib/projectActions";
+import { toast } from "@/lib/toast";
 import { DIY_HIRE, OWNERS, PRIORITIES, SEASONS, STATUSES, type Project } from "@/lib/constants";
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? null : Number(v));
@@ -23,11 +25,31 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [catChoice, setCatChoice] = useState(initial?.category_id ?? "");
+  const [formKey, setFormKey] = useState(0); // bumped to reset the form after "Save & add another"
   const editing = !!initial;
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Unsaved-changes guard: warn before leaving the page (in-app links or closing/reloading).
+  const dirty = useRef(false);
+  const markDirty = () => { dirty.current = true; };
+  useEffect(() => {
+    const LEAVE = "You have unsaved changes. Leave without saving?";
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { if (dirty.current) { e.preventDefault(); e.returnValue = ""; } };
+    const onClick = (e: MouseEvent) => {
+      if (!dirty.current || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey) return;
+      const a = (e.target as Element).closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a || a.target === "_blank" || formRef.current?.contains(a)) return;
+      if (!window.confirm(LEAVE)) { e.preventDefault(); e.stopPropagation(); } else dirty.current = false;
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("click", onClick, true);
+    return () => { window.removeEventListener("beforeunload", onBeforeUnload); document.removeEventListener("click", onClick, true); };
+  }, []);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy) return;
+    const another = (e.nativeEvent as SubmitEvent).submitter?.getAttribute("value") === "another";
     setBusy(true); setError(null);
     const f = new FormData(e.currentTarget);
     const supabase = createClient();
@@ -79,25 +101,53 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       ? await supabase.from("projects").update(values).eq("id", initial!.id)
       : await supabase.from("projects").insert(values);
     if (error) { setError(error.message); setBusy(false); return; }
+    dirty.current = false;
+    if (another) {
+      // Fresh blank form for the next one.
+      toast(`Saved “${values.title}” ✓ — ready for the next one`);
+      setSeasons([]); setCatChoice(""); setFormKey((k) => k + 1); setBusy(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      router.refresh();
+      return;
+    }
+    toast(editing ? "Saved ✓" : `Added “${values.title}” ✓`);
     router.push(editing ? "/projects" : "/"); router.refresh();
   }
 
-  async function remove() {
-    if (!initial || !confirm(`Delete “${initial.title}”? This can't be undone.`)) return;
+  async function duplicate() {
+    if (!initial) return;
+    if (dirty.current && !window.confirm("Unsaved changes won't be copied. Duplicate the saved version?")) return;
     setBusy(true);
-    const { error } = await createClient().from("projects").delete().eq("id", initial.id);
+    const copy = {
+      title: `${initial.title} (copy)`, category_id: initial.category_id, priority: initial.priority, seasons: initial.seasons,
+      diy_hire: initial.diy_hire, owner: initial.owner, status: "Not Started", target_date: null, target_note: initial.target_note,
+      next_action: initial.next_action, notes: initial.notes, estimated_cost: initial.estimated_cost, quoted_cost: null, actual_cost: null,
+      blocked_by: initial.blocked_by, recurrence_months: initial.recurrence_months, completed_on: null,
+    };
+    const { data, error } = await createClient().from("projects").insert(copy).select("id").single();
     if (error) { setError(error.message); setBusy(false); return; }
-    router.push("/projects"); router.refresh();
+    dirty.current = false;
+    toast("Duplicated ✓ — you're editing the copy");
+    router.push(`/projects/${data.id}`);
+  }
+
+  async function remove() {
+    if (!initial || !confirm(`Delete “${initial.title}”? You can undo or restore it from Recently deleted for 30 days.`)) return;
+    setBusy(true);
+    dirty.current = false;
+    const err = await softDeleteProject(initial.id, initial.title, router);
+    if (err) { setError(err); setBusy(false); return; }
+    router.push("/projects");
   }
 
   const Label = ({ children }: { children: React.ReactNode }) => <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
 
   return (
-    <form id={formId} onSubmit={submit} className="card mt-4 space-y-4 p-5">
+    <form key={formKey} ref={formRef} id={formId} onSubmit={submit} onChange={markDirty} className="card mt-4 space-y-4 p-5">
       {error && (
         <p role="alert" className="sticky top-16 z-20 rounded-xl border border-berry bg-surface p-3 text-sm text-berry shadow">{error}</p>
       )}
-      <label className="block"><Label>Project</Label><input name="title" required defaultValue={initial?.title} className="input" placeholder="e.g. Fix carport gutter flooding" /></label>
+      <label className="block"><Label>Project</Label><input name="title" required defaultValue={initial?.title} autoFocus={!editing} className="input" placeholder="e.g. Fix carport gutter flooding" /></label>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -130,7 +180,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
           {SEASONS.map((s) => {
             const on = seasons.includes(s);
             return (
-              <button type="button" key={s} onClick={() => setSeasons(on ? seasons.filter((x) => x !== s) : [...seasons, s])}
+              <button type="button" key={s} onClick={() => { markDirty(); setSeasons(on ? seasons.filter((x) => x !== s) : [...seasons, s]); }}
                 className={`rounded-full border px-4 py-2 text-sm ${on ? "border-moss bg-moss text-white" : "border-line text-muted"}`}>{s}</button>
             );
           })}
@@ -161,6 +211,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
 
       <div className="flex flex-wrap items-center gap-3">
         {!hideSubmit && <button className="btn inline-flex w-full md:w-auto" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Save project"}</button>}
+        {editing && <button type="button" onClick={duplicate} disabled={busy} className="text-sm text-moss underline">Duplicate project</button>}
         {editing && <button type="button" onClick={remove} disabled={busy} className="text-sm text-berry underline">Delete project</button>}
       </div>
     </form>

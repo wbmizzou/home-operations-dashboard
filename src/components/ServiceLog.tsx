@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { money } from "@/lib/constants";
 import { addMonths } from "@/lib/recurrence";
+import { toast } from "@/lib/toast";
 
 export type Log = { id: string; performed_on: string; cost: number | null; notes: string | null };
 
@@ -31,6 +32,7 @@ export default function ServiceLog({ projectId, months, logs }: { projectId: str
     });
     if (error) { setError(error.message); setBusy(false); return; }
     setCost(""); setNotes(""); setBusy(false);
+    toast("Service logged ✓");
     router.refresh();
   }
 

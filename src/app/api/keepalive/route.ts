@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
   // A trivial read. Row-level security returns nothing for an anonymous caller,
   // but the request still reaches the database, which is what counts as activity.
   const { error } = await supabase.from("categories").select("id").limit(1);
+  // Also clear projects that have sat in Recently deleted for more than 30 days.
+  await supabase.rpc("purge_deleted_projects");
 
   return NextResponse.json({ ok: !error, at: new Date().toISOString() }, { status: error ? 502 : 200 });
 }

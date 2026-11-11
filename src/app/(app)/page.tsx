@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { addMonths } from "@/lib/recurrence";
+import { addMonths, isRecurring } from "@/lib/recurrence";
+import ThemeToggle from "@/components/ThemeToggle";
 import { currentSeason, type Project } from "@/lib/constants";
 import { Acorn, Footer, HeroScene } from "@/components/Whimsy";
 import { PipelineBar, ProgressRing, RankedBars, SeasonHeatmap, SpendChart, priorityRows, type SpendEvent } from "@/components/charts";
@@ -44,8 +45,8 @@ function ProjectRow({ p }: { p: Project }) {
 export default async function Dashboard() {
   const supabase = await createClient();
   const [{ data: rows }, { data: logs }] = await Promise.all([
-    supabase.from("projects").select("*, categories(name)"),
-    supabase.from("service_logs").select("cost, performed_on, project_id, projects(title)"),
+    supabase.from("projects").select("*, categories(name)").is("deleted_at", null),
+    supabase.from("service_logs").select("cost, performed_on, project_id, projects!inner(title, deleted_at)").is("projects.deleted_at", null),
   ]);
   const projects = (rows ?? []) as Project[];
   const open = projects.filter((p) => p.status !== "Complete");
@@ -86,6 +87,13 @@ export default async function Dashboard() {
   const upcoming = dated
     .filter((p) => p.target_date && (p.recurrence_months ? p.target_date <= soon : p.target_date >= today && ["Scheduled", "Planned", "In Progress"].includes(p.status)))
     .sort((a, b) => a.target_date!.localeCompare(b.target_date!)).slice(0, 5);
+  // Recurring upkeep: next due = last service + interval.
+  const recurring = open.filter(isRecurring).map((p) => {
+    const last = lastService.get(p.id);
+    return { p, last, due: last && p.recurrence_months ? addMonths(last, p.recurrence_months) : null };
+  }).sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"));
+  const fmtDue = (d: string) => new Date(d + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric" });
+
   const inMotion = open.filter((p) => ["Scheduled", "In Progress"].includes(p.status)).length;
 
   return (
@@ -98,8 +106,28 @@ export default async function Dashboard() {
             <h1 className="text-3xl md:text-4xl" style={{ color: "var(--ink)" }}>Home Hollow</h1>
           </div>
           <Link href="/projects/new" className="btn hidden md:inline-flex">＋ Add project</Link>
+          <ThemeToggle className="md:hidden" />
         </div>
       </header>
+
+      {recurring.length > 0 && (
+        <section className="mt-4" aria-label="Recurring upkeep">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">🔁 Recurring upkeep</h2>
+          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+            {recurring.map(({ p, due }) => {
+              const overdue = !!due && due < today;
+              return (
+                <Link key={p.id} href={`/projects/${p.id}`} className="card min-w-[13rem] shrink-0 px-4 py-3">
+                  <div className="truncate font-semibold">{p.title}</div>
+                  <div className={`text-xs ${overdue ? "font-semibold text-berry" : "text-muted"}`}>
+                    {due ? (overdue ? `⏰ Overdue since ${fmtDue(due)}` : `Next due ${fmtDue(due)}`) : "No service logged yet — tap to log one"}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <div className="mt-6 space-y-4">
         <SpendChart events={events} total={spent} completed={completed.length} />

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const ITEMS = [
   { href: "/", label: "Dashboard", icon: "🏡" },
@@ -24,9 +25,12 @@ export default function Nav() {
             </Link>
           ))}
         </nav>
-        <form action="/auth/signout" method="post" className="mt-auto">
-          <button className="text-sm text-muted hover:text-ink">Sign out</button>
-        </form>
+        <div className="mt-auto flex items-center justify-between gap-2">
+          <form action="/auth/signout" method="post">
+            <button className="text-sm text-muted hover:text-ink">Sign out</button>
+          </form>
+          <ThemeToggle />
+        </div>
       </aside>
       {/* Mobile bottom tab bar */}
       <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
