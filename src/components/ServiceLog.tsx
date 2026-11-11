@@ -4,13 +4,14 @@ import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { money } from "@/lib/constants";
 import { nextDueDate } from "@/lib/recurrence";
+import { describe, type Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
 
 export type Log = { id: string; performed_on: string; cost: number | null; notes: string | null };
 
 const fmt = (d: string) => new Date(d + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export default function ServiceLog({ projectId, months, logs, target }: { projectId: string; months: number | null; logs: Log[]; target: string | null }) {
+export default function ServiceLog({ projectId, months, logs, target, rule }: { projectId: string; months: number | null; logs: Log[]; target: string | null; rule: Recurrence | null }) {
   const router = useRouter();
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
@@ -20,7 +21,7 @@ export default function ServiceLog({ projectId, months, logs, target }: { projec
   const [error, setError] = useState<string | null>(null);
 
   const last = logs[0]?.performed_on ?? null;
-  const due = nextDueDate(last, months, target);
+  const due = nextDueDate(last, months, target, null, rule);
   const future = date > today;
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -67,9 +68,9 @@ export default function ServiceLog({ projectId, months, logs, target }: { projec
     <section className="card mt-6 p-5">
       <h2 className="text-xl">🔧 Service log</h2>
       <p className="mt-1 text-sm text-muted">
-        {months ? `Repeats every ${months} month${months === 1 ? "" : "s"}. ` : "Set “Repeats every (months)” below to track when the next one is due. "}
-        {due ? <span className={overdue ? "font-semibold text-berry" : ""}>{overdue ? "Overdue since " : "Next due "}{fmt(due)}.</span> : logs.length === 0 ? "Nothing logged yet." : null}
-        {logs.length > 0 && <> Total spent: <b>{money(total)}</b>.</>}
+        {rule ? `🔁 ${describe(rule)}. ` : months ? `Repeats every ${months} month${months === 1 ? "" : "s"}. ` : "Set a repeat pattern below to track when the next one is due. "}
+        {due ? <span className={overdue ? "font-semibold text-berry" : ""}>{overdue ? "Overdue since " : "Next due "}{fmt(due)}.</span> : rule && logs.length ? "The series has ended." : logs.length === 0 ? "Nothing logged yet." : null}
+        {logs.length > 0 && <> Upkeep spent: <b>{money(total)}</b> (not counted in home value).</>}
       </p>
 
       <form onSubmit={add} className="mt-4 grid gap-3 sm:grid-cols-[10rem_8rem_1fr_auto] sm:items-end">

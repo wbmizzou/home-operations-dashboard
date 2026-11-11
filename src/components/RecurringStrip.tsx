@@ -3,9 +3,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { prettyDate } from "@/lib/recurrence";
 import QuickLogSheet, { type LogTarget } from "@/components/QuickLogSheet";
+import type { Recurrence } from "@/lib/rrule";
 
 /** Dashboard strip of recurring upkeep, each with a one-tap "✓ Done" that opens the quick log. */
-export default function RecurringStrip({ items, soon }: { items: { id: string; title: string; months: number | null; due: string | null; logged: boolean }[]; soon: boolean }) {
+export default function RecurringStrip({ items, soon }: { items: { id: string; title: string; months: number | null; rule: Recurrence | null; due: string | null; logged: boolean }[]; soon: boolean }) {
   const [logging, setLogging] = useState<LogTarget | null>(null);
   const today = new Date().toISOString().slice(0, 10);
   return (
@@ -25,7 +26,7 @@ export default function RecurringStrip({ items, soon }: { items: { id: string; t
                   {!t.due ? "No schedule set" : overdue && !t.logged ? "Due now · never logged" : overdue ? `⏰ Overdue since ${prettyDate(t.due)}` : t.due === today ? "Due today" : `Due ${prettyDate(t.due)}`}
                 </div>
               </Link>
-              <button type="button" onClick={() => setLogging({ id: t.id, title: t.title, months: t.months })}
+              <button type="button" onClick={() => setLogging({ id: t.id, title: t.title, months: t.months, rule: t.rule })}
                 className="shrink-0 rounded-full border-2 border-moss px-3 py-1.5 text-sm font-semibold text-moss active:scale-95">✓ Done</button>
             </div>
           );

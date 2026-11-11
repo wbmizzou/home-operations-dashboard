@@ -2,10 +2,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { addMonths, prettyDate } from "@/lib/recurrence";
+import { nextDueDate, prettyDate } from "@/lib/recurrence";
+import type { Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
 
-export type LogTarget = { id: string; title: string; months: number | null };
+export type LogTarget = { id: string; title: string; months: number | null; rule?: Recurrence | null };
 
 /** Bottom sheet to record a completed service: date (today by default), cost, notes. */
 export default function QuickLogSheet({ task, onClose }: { task: LogTarget | null; onClose: () => void }) {
@@ -28,7 +29,8 @@ export default function QuickLogSheet({ task, onClose }: { task: LogTarget | nul
     if (!error) await supabase.from("projects").update({ target_date: null }).eq("id", task!.id); // back on the regular schedule
     setBusy(false);
     if (error) { setError(error.message); return; }
-    const next = task!.months ? ` — next due ${prettyDate(addMonths(date, task!.months))}` : "";
+    const nd = nextDueDate(date, task!.months, null, null, task!.rule ?? null);
+    const next = nd ? ` — next due ${prettyDate(nd)}` : task!.rule ? " — that was the last one in the series" : "";
     toast(`Logged “${task!.title}” ✓${next}`);
     setCost(""); setNotes(""); setDate(today);
     onClose();

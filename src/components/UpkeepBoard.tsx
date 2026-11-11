@@ -7,11 +7,12 @@ import { money } from "@/lib/constants";
 import { prettyDate, type DueState } from "@/lib/recurrence";
 import { toast } from "@/lib/toast";
 import QuickLogSheet, { type LogTarget } from "@/components/QuickLogSheet";
+import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
+import { approxMonths, ruleFromMonths, type Recurrence } from "@/lib/rrule";
 
-export type UpkeepTask = { id: string; title: string; months: number | null; category: string | null; last: string | null; due: string | null; state: DueState };
+export type UpkeepTask = { id: string; title: string; months: number | null; rule: Recurrence | null; schedule: string; category: string | null; last: string | null; due: string | null; state: DueState };
 export type HistoryEntry = { id: string; projectId: string; title: string; date: string; cost: number | null; notes: string | null };
 
-const INTERVALS = [1, 2, 3, 6, 12, 24];
 const every = (m: number | null) => (!m ? "No schedule set" : m === 12 ? "Every year" : m === 24 ? "Every 2 years" : m === 1 ? "Every month" : `Every ${m} months`);
 
 // Common home upkeep. `match` hides a suggestion when a recurring task with that word already exists.
@@ -48,8 +49,9 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
 
   async function addStarter() {
     setBusy(true);
+    const today = new Date().toISOString().slice(0, 10);
     const rows = STARTER.filter((s) => picked.includes(s.title)).map((s) => ({
-      title: s.title, status: "Recurring", recurrence_months: s.months, priority: 2, owner: defaultOwner, seasons: [] as string[],
+      title: s.title, status: "Recurring", recurrence: ruleFromMonths(s.months, today), recurrence_months: s.months, priority: 2, owner: defaultOwner, seasons: [] as string[],
     }));
     const { error } = await createClient().from("projects").insert(rows);
     setBusy(false);
@@ -79,10 +81,10 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
           <li key={t.id} className="card flex items-center gap-3 p-4">
             <Link href={`/projects/${t.id}`} className="min-w-0 flex-1">
               <div className="truncate font-semibold">{t.title}</div>
-              <div className="truncate text-xs text-muted">{every(t.months)} · {t.last ? `last ${prettyDate(t.last)}` : "not logged yet"}</div>
+              <div className="truncate text-xs text-muted">{t.schedule} · {t.last ? `last ${prettyDate(t.last)}` : "not logged yet"}</div>
               <span className="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold" style={STATE_STYLE[t.state].style}>{STATE_STYLE[t.state].label(t)}</span>
             </Link>
-            <button type="button" onClick={() => setLogging({ id: t.id, title: t.title, months: t.months })}
+            <button type="button" onClick={() => setLogging({ id: t.id, title: t.title, months: t.months, rule: t.rule })}
               className="shrink-0 rounded-full border-2 border-moss px-3 py-2 text-sm font-semibold text-moss active:scale-95">✓ Log it</button>
           </li>
         ))}
@@ -159,7 +161,7 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
   const router = useRouter();
   const today = new Date().toISOString().slice(0, 10);
   const [title, setTitle] = useState("");
-  const [months, setMonths] = useState(12);
+  const [rule, setRule] = useState<Recurrence>(() => defaultRule(today));
   const [category, setCategory] = useState("");
   const [last, setLast] = useState("");
   const [cost, setCost] = useState("");
@@ -171,7 +173,7 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
     setBusy(true); setError(null);
     const supabase = createClient();
     const { data, error } = await supabase.from("projects").insert({
-      title: title.trim(), status: "Recurring", recurrence_months: months, priority: 2, owner: defaultOwner, seasons: [], category_id: category || null,
+      title: title.trim(), status: "Recurring", recurrence: rule, recurrence_months: approxMonths(rule), priority: 2, owner: defaultOwner, seasons: [], category_id: category || null,
     }).select("id").single();
     if (error) { setError(error.message); setBusy(false); return; }
     if (last) {
@@ -184,21 +186,16 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center" onClick={() => !busy && onClose()}>
-      <form role="dialog" aria-modal="true" aria-labelledby="newtask-title" onSubmit={save} className="card w-full max-w-sm space-y-3 p-5" onClick={(e) => e.stopPropagation()}>
+      <form role="dialog" aria-modal="true" aria-labelledby="newtask-title" onSubmit={save} className="card max-h-[85dvh] w-full max-w-md space-y-3 overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
         <h2 id="newtask-title" className="text-lg">＋ New upkeep task</h2>
         <label className="block"><span className="mb-1 block text-sm font-medium text-muted">What needs doing?</span>
           <input className="input" required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Replace HVAC filter" autoFocus /></label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="block"><span className="mb-1 block text-sm font-medium text-muted">How often</span>
-            <select className="input" value={months} onChange={(e) => setMonths(Number(e.target.value))}>
-              {INTERVALS.map((m) => <option key={m} value={m}>{every(m)}</option>)}
-            </select></label>
-          <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Category</span>
-            <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">None</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select></label>
-        </div>
+        <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Category</span>
+          <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">None</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select></label>
+        <div><span className="mb-1 block text-sm font-medium text-muted">Repeats</span><RecurrenceEditor value={rule} onChange={setRule} /></div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Last done (optional)</span>
             <input className="input" type="date" max={today} value={last} onChange={(e) => setLast(e.target.value)} /></label>

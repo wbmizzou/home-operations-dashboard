@@ -1,3 +1,5 @@
+import { nextOccurrence, type Recurrence } from "@/lib/rrule";
+
 export function addMonths(date: string, months: number): string {
   const d = new Date(date + "T00:00:00");
   const day = d.getDate();
@@ -7,28 +9,29 @@ export function addMonths(date: string, months: number): string {
   d.setDate(Math.min(day, last));
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-export const isRecurring = (p: { status: string; recurrence_months: number | null }) =>
-  p.status === "Recurring" || !!p.recurrence_months;
+export const isRecurring = (p: { status: string; recurrence_months: number | null; recurrence?: unknown }) =>
+  p.status === "Recurring" || !!p.recurrence_months || !!p.recurrence;
 
 export type DueState = "overdue" | "soon" | "never" | "later";
 
 /**
  * When a recurring task is next due:
  *  - a target date that's later than the last service wins (it's a manual reschedule);
- *  - otherwise the last service + the interval;
- *  - before the first service, the day it was added.
+ *  - with a repeat pattern: the next date in the pattern after the last service (or its first date);
+ *  - older "every N months" tasks: the last service + the interval, or the day they were added.
  * Logging a service clears the target, so the normal schedule resumes.
  */
-export function nextDueDate(last: string | null, months: number | null, target: string | null, created?: string | null): string | null {
+export function nextDueDate(last: string | null, months: number | null, target: string | null, created?: string | null, rule?: Recurrence | null): string | null {
   if (target && (!last || target > last)) return target;
+  if (rule) return nextOccurrence(rule, last);
   if (last && months) return addMonths(last, months);
   if (!last && created) return created.slice(0, 10);
   return null;
 }
 
 /** Next due date and how urgent it is ("soon" = within 30 days). */
-export function dueInfo(last: string | null, months: number | null, target: string | null, created: string | null, today = new Date().toISOString().slice(0, 10)) {
-  const due = nextDueDate(last, months, target, created);
+export function dueInfo(last: string | null, months: number | null, target: string | null, created: string | null, rule: Recurrence | null = null, today = new Date().toISOString().slice(0, 10)) {
+  const due = nextDueDate(last, months, target, created, rule);
   const soon = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
   const state: DueState = !due ? "never" : due < today ? "overdue" : due <= soon ? "soon" : "later";
   return { due, state };
