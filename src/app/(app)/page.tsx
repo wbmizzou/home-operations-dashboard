@@ -90,11 +90,17 @@ export default async function Dashboard() {
   const upcoming = dated
     .filter((p) => p.target_date && (p.recurrence_months ? p.target_date <= soon : p.target_date >= today && ["Scheduled", "Planned", "In Progress"].includes(p.status)))
     .sort((a, b) => a.target_date!.localeCompare(b.target_date!)).slice(0, 5);
-  // Recurring upkeep: next due = last service + interval.
-  const recurring = open.filter(isRecurring).map((p) => {
-    const last = lastService.get(p.id);
-    return { p, last, due: last && p.recurrence_months ? addMonths(last, p.recurrence_months) : null };
-  }).sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"));
+  // Recurring upkeep: next due = last service + interval (before the first service: the target
+  // date, or the day it was added). The strip shows everything due within 30 days, soonest first;
+  // if nothing is that close, just the next one up.
+  const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const recurringAll = open.filter(isRecurring).map((p) => {
+    const last = lastService.get(p.id) ?? null;
+    const firstDue = p.target_date ?? (p as Project & { created_at: string }).created_at.slice(0, 10);
+    return { p, logged: !!last, due: last && p.recurrence_months ? addMonths(last, p.recurrence_months) : last ? null : firstDue };
+  }).filter((r) => r.due).sort((a, b) => a.due!.localeCompare(b.due!));
+  const dueSoon = recurringAll.filter((r) => r.due! <= in30);
+  const recurring = dueSoon.length ? dueSoon : recurringAll.slice(0, 1);
 
   const inMotion = open.filter((p) => ["Scheduled", "In Progress"].includes(p.status)).length;
 
@@ -113,7 +119,7 @@ export default async function Dashboard() {
       </header>
 
       {recurring.length > 0 && (
-        <RecurringStrip items={recurring.map(({ p, due }) => ({ id: p.id, title: p.title, months: p.recurrence_months, due }))} />
+        <RecurringStrip soon={dueSoon.length > 0} items={recurring.map(({ p, due, logged }) => ({ id: p.id, title: p.title, months: p.recurrence_months, due, logged }))} />
       )}
 
       <div className="mt-6 space-y-4">

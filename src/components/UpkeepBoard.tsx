@@ -28,8 +28,8 @@ const STARTER = [
 ];
 
 const STATE_STYLE: Record<DueState, { label: (t: UpkeepTask) => string; style: React.CSSProperties }> = {
-  overdue: { label: (t) => `⏰ Overdue since ${prettyDate(t.due!)}`, style: { background: "color-mix(in srgb, var(--berry) 18%, transparent)", color: "var(--berry)" } },
-  soon: { label: (t) => `Due ${prettyDate(t.due!)}`, style: { background: "color-mix(in srgb, var(--gold) 22%, transparent)", color: "var(--bark)" } },
+  overdue: { label: (t) => (t.last ? `⏰ Overdue since ${prettyDate(t.due!)}` : "Due now"), style: { background: "color-mix(in srgb, var(--berry) 18%, transparent)", color: "var(--berry)" } },
+  soon: { label: (t) => (t.due === new Date().toISOString().slice(0, 10) ? "Due today" : `Due ${prettyDate(t.due!)}`), style: { background: "color-mix(in srgb, var(--gold) 22%, transparent)", color: "var(--bark)" } },
   never: { label: () => "Not logged yet", style: { background: "var(--line)", color: "var(--muted)" } },
   later: { label: (t) => `Next ${prettyDate(t.due!)}`, style: { background: "color-mix(in srgb, var(--moss) 14%, transparent)", color: "var(--moss)" } },
 };
@@ -79,7 +79,7 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
           <li key={t.id} className="card flex items-center gap-3 p-4">
             <Link href={`/projects/${t.id}`} className="min-w-0 flex-1">
               <div className="truncate font-semibold">{t.title}</div>
-              <div className="truncate text-xs text-muted">{every(t.months)}{t.last ? ` · last ${prettyDate(t.last)}` : ""}</div>
+              <div className="truncate text-xs text-muted">{every(t.months)} · {t.last ? `last ${prettyDate(t.last)}` : "not logged yet"}</div>
               <span className="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold" style={STATE_STYLE[t.state].style}>{STATE_STYLE[t.state].label(t)}</span>
             </Link>
             <button type="button" onClick={() => setLogging({ id: t.id, title: t.title, months: t.months })}
