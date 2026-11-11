@@ -24,7 +24,7 @@ export default async function Upkeep() {
     .filter(isRecurring)
     .map((p) => {
       const last = history.find((h) => h.projectId === p.id)?.date ?? null;
-      const { due, state } = dueInfo(last, p.recurrence_months, p.target_date ?? p.created_at.slice(0, 10));
+      const { due, state } = dueInfo(last, p.recurrence_months, p.target_date, p.created_at);
       return { id: p.id, title: p.title, months: p.recurrence_months, category: p.categories?.name ?? null, last, due, state };
     })
     .sort((a, b) => ORDER[a.state] - ORDER[b.state] || (a.due ?? "").localeCompare(b.due ?? "") || a.title.localeCompare(b.title));

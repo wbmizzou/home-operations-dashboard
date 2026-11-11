@@ -11,12 +11,24 @@ export const isRecurring = (p: { status: string; recurrence_months: number | nul
   p.status === "Recurring" || !!p.recurrence_months;
 
 export type DueState = "overdue" | "soon" | "never" | "later";
+
 /**
- * Next due date and how urgent it is ("soon" = within 30 days). After a service it's the last
- * service + interval; before the first one it's `firstDue` (the target date, or the day the task was added).
+ * When a recurring task is next due:
+ *  - a target date that's later than the last service wins (it's a manual reschedule);
+ *  - otherwise the last service + the interval;
+ *  - before the first service, the day it was added.
+ * Logging a service clears the target, so the normal schedule resumes.
  */
-export function dueInfo(last: string | null, months: number | null, firstDue: string | null = null, today = new Date().toISOString().slice(0, 10)) {
-  const due = last && months ? addMonths(last, months) : last ? null : firstDue;
+export function nextDueDate(last: string | null, months: number | null, target: string | null, created?: string | null): string | null {
+  if (target && (!last || target > last)) return target;
+  if (last && months) return addMonths(last, months);
+  if (!last && created) return created.slice(0, 10);
+  return null;
+}
+
+/** Next due date and how urgent it is ("soon" = within 30 days). */
+export function dueInfo(last: string | null, months: number | null, target: string | null, created: string | null, today = new Date().toISOString().slice(0, 10)) {
+  const due = nextDueDate(last, months, target, created);
   const soon = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
   const state: DueState = !due ? "never" : due < today ? "overdue" : due <= soon ? "soon" : "later";
   return { due, state };

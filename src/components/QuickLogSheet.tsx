@@ -21,9 +21,11 @@ export default function QuickLogSheet({ task, onClose }: { task: LogTarget | nul
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError(null);
-    const { error } = await createClient().from("service_logs").insert({
+    const supabase = createClient();
+    const { error } = await supabase.from("service_logs").insert({
       project_id: task!.id, performed_on: date, cost: cost === "" ? null : Number(cost), notes: notes.trim() || null,
     });
+    if (!error) await supabase.from("projects").update({ target_date: null }).eq("id", task!.id); // back on the regular schedule
     setBusy(false);
     if (error) { setError(error.message); return; }
     const next = task!.months ? ` — next due ${prettyDate(addMonths(date, task!.months))}` : "";

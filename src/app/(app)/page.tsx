@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { addMonths, isRecurring } from "@/lib/recurrence";
+import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import ThemeToggle from "@/components/ThemeToggle";
 import RecurringStrip from "@/components/RecurringStrip";
 import { getHousehold } from "@/lib/household";
@@ -84,7 +84,7 @@ export default async function Dashboard() {
   for (const l of serviceLogs) if (!lastService.get(l.project_id) || l.performed_on > lastService.get(l.project_id)!) lastService.set(l.project_id, l.performed_on);
   const soon = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10);
   const dated: Project[] = open.map((p) => {
-    if (p.recurrence_months && lastService.has(p.id)) return { ...p, target_date: addMonths(lastService.get(p.id)!, p.recurrence_months) };
+    if (p.recurrence_months && lastService.has(p.id)) return { ...p, target_date: nextDueDate(lastService.get(p.id)!, p.recurrence_months, p.target_date) };
     return p;
   });
   const upcoming = dated
@@ -96,8 +96,7 @@ export default async function Dashboard() {
   const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
   const recurringAll = open.filter(isRecurring).map((p) => {
     const last = lastService.get(p.id) ?? null;
-    const firstDue = p.target_date ?? (p as Project & { created_at: string }).created_at.slice(0, 10);
-    return { p, logged: !!last, due: last && p.recurrence_months ? addMonths(last, p.recurrence_months) : last ? null : firstDue };
+    return { p, logged: !!last, due: nextDueDate(last, p.recurrence_months, p.target_date, (p as Project & { created_at: string }).created_at) };
   }).filter((r) => r.due).sort((a, b) => a.due!.localeCompare(b.due!));
   const dueSoon = recurringAll.filter((r) => r.due! <= in30);
   const recurring = dueSoon.length ? dueSoon : recurringAll.slice(0, 1);
