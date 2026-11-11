@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { addMonths, isRecurring } from "@/lib/recurrence";
 import ThemeToggle from "@/components/ThemeToggle";
+import RecurringStrip from "@/components/RecurringStrip";
 import { getHousehold } from "@/lib/household";
 import { currentSeason, type Project } from "@/lib/constants";
 import { Acorn, Footer, HeroScene } from "@/components/Whimsy";
@@ -94,7 +95,6 @@ export default async function Dashboard() {
     const last = lastService.get(p.id);
     return { p, last, due: last && p.recurrence_months ? addMonths(last, p.recurrence_months) : null };
   }).sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"));
-  const fmtDue = (d: string) => new Date(d + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric" });
 
   const inMotion = open.filter((p) => ["Scheduled", "In Progress"].includes(p.status)).length;
 
@@ -113,22 +113,7 @@ export default async function Dashboard() {
       </header>
 
       {recurring.length > 0 && (
-        <section className="mt-4" aria-label="Recurring upkeep">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">🔁 Recurring upkeep</h2>
-          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-            {recurring.map(({ p, due }) => {
-              const overdue = !!due && due < today;
-              return (
-                <Link key={p.id} href={`/projects/${p.id}`} className="card min-w-[13rem] shrink-0 px-4 py-3">
-                  <div className="truncate font-semibold">{p.title}</div>
-                  <div className={`text-xs ${overdue ? "font-semibold text-berry" : "text-muted"}`}>
-                    {due ? (overdue ? `⏰ Overdue since ${fmtDue(due)}` : `Next due ${fmtDue(due)}`) : "No service logged yet — tap to log one"}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+        <RecurringStrip items={recurring.map(({ p, due }) => ({ id: p.id, title: p.title, months: p.recurrence_months, due }))} />
       )}
 
       <div className="mt-6 space-y-4">
@@ -165,8 +150,6 @@ export default async function Dashboard() {
 
       <Footer />
 
-      <Link href="/projects/new" aria-label="Add project"
-        className="btn fixed flex bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 h-14 w-14 !p-0 text-2xl shadow-lg md:hidden">＋</Link>
     </>
   );
 }

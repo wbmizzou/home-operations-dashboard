@@ -9,3 +9,14 @@ export function addMonths(date: string, months: number): string {
 }
 export const isRecurring = (p: { status: string; recurrence_months: number | null }) =>
   p.status === "Recurring" || !!p.recurrence_months;
+
+export type DueState = "overdue" | "soon" | "never" | "later";
+/** Next due date (last service + interval) and how urgent it is. "Soon" = within 30 days. */
+export function dueInfo(last: string | null, months: number | null, today = new Date().toISOString().slice(0, 10)) {
+  const due = last && months ? addMonths(last, months) : null;
+  const soon = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const state: DueState = !due ? "never" : due < today ? "overdue" : due <= soon ? "soon" : "later";
+  return { due, state };
+}
+export const prettyDate = (d: string, today = new Date().toISOString().slice(0, 10)) =>
+  new Date(d + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric" });
