@@ -31,8 +31,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   if (data.user && (path.startsWith("/login") || path.startsWith("/signup"))) {
+    // Already signed in: an invite link goes straight to the join step, keeping its code.
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    const code = url.searchParams.get("code");
+    url.pathname = code ? "/welcome" : "/";
+    url.search = code ? `?code=${encodeURIComponent(code)}` : "";
     return NextResponse.redirect(url);
   }
   return response;

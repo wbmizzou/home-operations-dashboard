@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { addMonths, isRecurring } from "@/lib/recurrence";
 import ThemeToggle from "@/components/ThemeToggle";
+import { getHousehold } from "@/lib/household";
 import { currentSeason, type Project } from "@/lib/constants";
 import { Acorn, Footer, HeroScene } from "@/components/Whimsy";
 import { PipelineBar, ProgressRing, RankedBars, SeasonHeatmap, SpendChart, priorityRows, type SpendEvent } from "@/components/charts";
@@ -44,6 +45,7 @@ function ProjectRow({ p }: { p: Project }) {
 
 export default async function Dashboard() {
   const supabase = await createClient();
+  const hh = (await getHousehold())!;
   const [{ data: rows }, { data: logs }] = await Promise.all([
     supabase.from("projects").select("*, categories(name)").is("deleted_at", null),
     supabase.from("service_logs").select("cost, performed_on, project_id, projects!inner(title, deleted_at)").is("projects.deleted_at", null),
@@ -99,11 +101,11 @@ export default async function Dashboard() {
   return (
     <>
       <header className="card relative overflow-hidden !border-0 p-0">
-        <HeroScene className="absolute inset-0 h-full w-full" />
+        <HeroScene className="absolute inset-0 h-full w-full" variant={hh.household.hero} />
         <div className="relative flex items-start justify-between gap-3 p-5 pb-24 md:pb-28">
           <div>
             <p className="text-sm font-semibold" style={{ color: "var(--bark)" }}>{GREETING[season]}</p>
-            <h1 className="text-3xl md:text-4xl" style={{ color: "var(--ink)" }}>Home Hollow</h1>
+            <h1 className="text-3xl md:text-4xl" style={{ color: "var(--ink)" }}>{hh.household.name}</h1>
           </div>
           <Link href="/projects/new" className="btn hidden md:inline-flex">＋ Add project</Link>
           <ThemeToggle className="md:hidden" />

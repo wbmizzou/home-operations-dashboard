@@ -1,6 +1,7 @@
 /* Little woodland illustrations. All colors come from CSS variables so they follow light/dark. */
 
-export function HeroScene({ className = "" }: { className?: string }) {
+/** `hollow` = the illustration of the original house; `cottage` = a generic storybook cottage for everyone else. */
+export function HeroScene({ className = "", variant = "hollow" }: { className?: string; variant?: "hollow" | "cottage" }) {
   return (
     <svg viewBox="0 0 400 130" preserveAspectRatio="xMidYMax slice" className={className} aria-hidden="true">
       <defs>
@@ -30,6 +31,8 @@ export function HeroScene({ className = "" }: { className?: string }) {
       {/* lawn */}
       <path d="M0 106Q100 98 200 104T400 102V130H0Z" fill="var(--lawn)" />
 
+{variant === "hollow" ? (
+        <>
       {/* fence + bins */}
       <g>
         <rect x="318" y="86" width="44" height="22" fill="var(--fence)" />
@@ -91,6 +94,26 @@ export function HeroScene({ className = "" }: { className?: string }) {
         <path d="M262 112V80" strokeWidth="2.6" />
         <path d="M262 92q-9-7-14-16M262 88q9-8 15-18M262 84q-3-9-2-17M254 82q-6 1-11 6" strokeWidth="1.5" />
       </g>
+
+        </>
+      ) : (
+        <>
+      {/* a generic storybook cottage */}
+      <g transform="translate(150 62)">
+        <rect x="10" y="26" width="62" height="38" rx="3" fill="var(--wall)" />
+        <path d="M0 30L41 4l41 26z" fill="var(--roof)" />
+        <rect x="58" y="8" width="8" height="16" fill="var(--bark)" />
+        <g fill="var(--smoke)" opacity=".7"><circle cx="62" cy="2" r="3.5" /><circle cx="66" cy="-6" r="4.5" /><circle cx="63" cy="-15" r="5.5" /></g>
+        <rect x="34" y="40" width="14" height="24" rx="7" fill="var(--door)" />
+        <rect x="16" y="36" width="12" height="12" rx="2" fill="var(--glow)" /><path d="M22 36v12M16 42h12" stroke="var(--bark)" strokeWidth="1" />
+        <rect x="54" y="36" width="12" height="12" rx="2" fill="var(--glow)" /><path d="M60 36v12M54 42h12" stroke="var(--bark)" strokeWidth="1" />
+        <g fill="var(--shrub)"><ellipse cx="8" cy="63" rx="8" ry="5.5" /><ellipse cx="78" cy="63" rx="8" ry="5.5" /></g>
+      </g>
+      <g fill="var(--pine1)"><path d="M104 112l11-34 11 34z" /><path d="M262 108l10-30 10 30z" /></g>
+      <g fill="var(--bark)"><rect x="113" y="112" width="4" height="8" /><rect x="268" y="108" width="4" height="9" /></g>
+
+        </>
+      )}
 
       {/* pine-straw yard */}
       <path d="M0 114Q100 108 200 113T400 110V130H0Z" fill="var(--straw)" />

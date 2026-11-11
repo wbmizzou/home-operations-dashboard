@@ -22,7 +22,6 @@ export const PRIORITIES = [
 
 export const SEASONS = ["Spring", "Summer", "Fall", "Winter", "Anytime"] as const;
 export const DIY_HIRE = ["DIY", "Hire", "Purchase"] as const;
-export const OWNERS = ["Will", "Joint", "Natalie"] as const;
 
 export type Project = {
   id: string;

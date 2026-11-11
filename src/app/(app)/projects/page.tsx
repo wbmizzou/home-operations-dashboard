@@ -4,6 +4,7 @@ import FilterBar, { ClearAllLink } from "@/components/FilterBar";
 import ProjectListItem, { type ListProject } from "@/components/ProjectListItem";
 import SearchBox from "@/components/SearchBox";
 import { createClient } from "@/lib/supabase/server";
+import { getHousehold } from "@/lib/household";
 import { addMonths, isRecurring } from "@/lib/recurrence";
 import { STATUS_SORT_ORDER, money, type Project } from "@/lib/constants";
 
@@ -18,12 +19,12 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: me }, { data: categories }, { count: deletedCount }] = await Promise.all([
-    supabase.rpc("current_owner"),
+  const hh = (await getHousehold())!;
+  const [{ data: categories }, { count: deletedCount }] = await Promise.all([
     supabase.from("categories").select("id, name").order("name"),
     supabase.from("projects").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
   ]);
-  const myName = (me as string | null) ?? null;
+  const myName = hh.me;
 
   let query = supabase.from("projects").select("*, categories(name)").is("deleted_at", null);
 
@@ -44,7 +45,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
     if (parts.length) query = query.or(parts.join(","));
   }
 
-  const owners = list(sp.owner).filter((o) => ["Will", "Joint", "Natalie", "none"].includes(o));
+  const owners = list(sp.owner).filter((o) => o === "none" || hh.owners.includes(o));
   if (owners.length) {
     const named = owners.filter((o) => o !== "none");
     const parts = [named.length ? `owner.in.(${named.join(",")})` : "", owners.includes("none") ? "owner.is.null" : ""].filter(Boolean);
@@ -134,7 +135,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
         {filtered && <ClearAllLink />}
       </header>
       <div className="mt-4"><Suspense><SearchBox /></Suspense></div>
-      <Suspense><FilterBar categories={categories ?? []} me={myName} /></Suspense>
+      <Suspense><FilterBar categories={categories ?? []} me={myName} owners={hh.owners} /></Suspense>
 
       <ul className="card mt-5 divide-y divide-line overflow-hidden">
         {projects.map((p, i) => {

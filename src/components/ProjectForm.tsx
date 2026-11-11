@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { softDeleteProject } from "@/lib/projectActions";
 import { toast } from "@/lib/toast";
-import { DIY_HIRE, OWNERS, PRIORITIES, SEASONS, STATUSES, type Project } from "@/lib/constants";
+import { DIY_HIRE, PRIORITIES, SEASONS, STATUSES, type Project } from "@/lib/constants";
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? null : Number(v));
 const str = (v: FormDataEntryValue | null) => (v === null || String(v).trim() === "" ? null : String(v).trim());
@@ -14,12 +14,14 @@ const today = () => new Date().toISOString().slice(0, 10);
 type Props = {
   formId?: string;
   hideSubmit?: boolean;
+  owners: string[];
+  defaultOwner?: string | null;
   categories: { id: string; name: string }[];
   projects: { id: string; title: string }[];
   initial?: Project;
 };
 
-export default function ProjectForm({ categories, projects, initial, formId, hideSubmit }: Props) {
+export default function ProjectForm({ categories, projects, initial, formId, hideSubmit, owners, defaultOwner }: Props) {
   const router = useRouter();
   const [seasons, setSeasons] = useState<string[]>(initial?.seasons ?? []);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +169,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
         <label className="block"><Label>Priority</Label>
           <select name="priority" className="input" defaultValue={initial?.priority ?? 3}>{PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label} · {p.focus}</option>)}</select></label>
         <label className="block"><Label>Owner</Label>
-          <select name="owner" className="input" defaultValue={initial ? (initial.owner ?? "") : "Joint"}><option value="">Unassigned</option>{OWNERS.map((o) => <option key={o}>{o}</option>)}</select></label>
+          <select name="owner" className="input" defaultValue={initial ? (initial.owner ?? "") : (defaultOwner ?? "")}><option value="">Unassigned</option>{[...new Set([...owners, ...(initial?.owner ? [initial.owner] : [])])].map((o) => <option key={o}>{o}</option>)}</select></label>
         <label className="block"><Label>DIY / Hire</Label>
           <select name="diy_hire" className="input" defaultValue={initial?.diy_hire ?? ""}><option value="">—</option>{DIY_HIRE.map((o) => <option key={o}>{o}</option>)}</select></label>
         <label className="block"><Label>Blocked by</Label>

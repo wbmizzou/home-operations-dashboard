@@ -25,7 +25,7 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
 
   return (
     <button type="button" onClick={() => apply(NEXT[theme])} aria-label={`Theme: ${LABEL[theme]}. Tap to change.`}
-      className={`rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink ${className}`}
+      className={`whitespace-nowrap rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink ${className}`}
       style={{ background: "color-mix(in srgb, var(--surface) 85%, transparent)" }}>
       {LABEL[theme]}
     </button>
