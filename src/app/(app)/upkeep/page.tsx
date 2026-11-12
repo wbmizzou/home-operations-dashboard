@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getHousehold } from "@/lib/household";
+import { requireHousehold } from "@/lib/household";
 import { dueInfo, isRecurring } from "@/lib/recurrence";
 import { describe, type Recurrence } from "@/lib/rrule";
 import UpkeepBoard, { type UpkeepTask, type HistoryEntry } from "@/components/UpkeepBoard";
@@ -10,7 +10,7 @@ const ORDER = { overdue: 0, soon: 1, never: 2, later: 3 } as const;
 
 export default async function Upkeep() {
   const supabase = await createClient();
-  const hh = (await getHousehold())!;
+  const hh = await requireHousehold();
   const [{ data: rows }, { data: logs }, { data: categories }] = await Promise.all([
     supabase.from("projects").select("id, title, status, recurrence_months, recurrence, target_date, created_at, categories(name)").is("deleted_at", null).neq("status", "Complete"),
     supabase.from("service_logs").select("id, project_id, performed_on, cost, notes, projects!inner(title, deleted_at)")

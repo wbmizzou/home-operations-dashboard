@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProjectForm from "@/components/ProjectForm";
-import { getHousehold } from "@/lib/household";
+import { requireHousehold } from "@/lib/household";
 import EditToolbar from "@/components/EditToolbar";
 import ServiceLog from "@/components/ServiceLog";
 import { isRecurring } from "@/lib/recurrence";
@@ -12,7 +12,7 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
-  const hh = (await getHousehold())!;
+  const hh = await requireHousehold();
   const [{ data: project }, { data: cats }, { data: others }, { data: logs }] = await Promise.all([
     supabase.from("projects").select("*, categories(name)").eq("id", id).is("deleted_at", null).maybeSingle(),
     supabase.from("categories").select("id, name").order("name"),

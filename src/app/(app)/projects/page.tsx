@@ -4,7 +4,7 @@ import FilterBar, { ClearAllLink } from "@/components/FilterBar";
 import ProjectListItem, { type ListProject } from "@/components/ProjectListItem";
 import SearchBox from "@/components/SearchBox";
 import { createClient } from "@/lib/supabase/server";
-import { getHousehold } from "@/lib/household";
+import { requireHousehold } from "@/lib/household";
 import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import { STATUS_SORT_ORDER, money, type Project } from "@/lib/constants";
 
@@ -19,7 +19,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const supabase = await createClient();
 
-  const hh = (await getHousehold())!;
+  const hh = await requireHousehold();
   const [{ data: categories }, { count: deletedCount }] = await Promise.all([
     supabase.from("categories").select("id, name").order("name"),
     supabase.from("projects").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),

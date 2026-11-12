@@ -1,11 +1,11 @@
-import { getHousehold } from "@/lib/household";
+import { requireHousehold } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
 import SettingsPanel from "@/components/SettingsPanel";
 
 export const dynamic = "force-dynamic";
 
 export default async function Settings() {
-  const hh = (await getHousehold())!;
+  const hh = await requireHousehold();
   const { data: { user } } = await (await createClient()).auth.getUser();
   return (
     <>

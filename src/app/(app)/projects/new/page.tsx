@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import NewToolbar from "@/components/NewToolbar";
 import ProjectForm from "@/components/ProjectForm";
-import { getHousehold } from "@/lib/household";
+import { requireHousehold } from "@/lib/household";
 
 export default async function NewProject() {
   const supabase = await createClient();
-  const hh = (await getHousehold())!;
+  const hh = await requireHousehold();
   const [{ data: cats }, { data: projects }] = await Promise.all([
     supabase.from("categories").select("id, name").order("name"),
     supabase.from("projects").select("id, title").is("deleted_at", null).neq("status", "Complete").order("title"),

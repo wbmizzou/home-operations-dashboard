@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import ThemeToggle from "@/components/ThemeToggle";
 import RecurringStrip from "@/components/RecurringStrip";
-import { getHousehold } from "@/lib/household";
+import { requireHousehold } from "@/lib/household";
 import { currentSeason, type Project } from "@/lib/constants";
 import { Acorn, Footer, HeroScene } from "@/components/Whimsy";
 import { PipelineBar, ProgressRing, RankedBars, SeasonHeatmap, SpendChart, priorityRows, type SpendEvent } from "@/components/charts";
@@ -46,7 +46,7 @@ function ProjectRow({ p }: { p: Project }) {
 
 export default async function Dashboard() {
   const supabase = await createClient();
-  const hh = (await getHousehold())!;
+  const hh = await requireHousehold();
   const [{ data: rows }, { data: logs }] = await Promise.all([
     supabase.from("projects").select("*, categories(name)").is("deleted_at", null),
     supabase.from("service_logs").select("cost, performed_on, project_id, projects!inner(title, deleted_at)").is("projects.deleted_at", null),

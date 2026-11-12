@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type Household = { id: string; name: string; hero: "cottage" | "hollow"; invite_code: string };
@@ -30,3 +31,14 @@ export const getHousehold = cache(async (): Promise<HouseholdContext | null> => 
   const owners = [...new Set([...names, ...(names.length > 1 || usedOwners.includes("Joint") ? ["Joint"] : []), ...usedOwners])];
   return { household: household as Household, members: (members ?? []) as Member[], me: (me as string | null) ?? null, owners };
 });
+
+/**
+ * For pages inside the app: the household, or a redirect to the welcome step.
+ * Pages render alongside the layout, so each page must check for itself rather than
+ * rely on the layout's redirect (otherwise a brand-new account crashes on first visit).
+ */
+export async function requireHousehold(): Promise<HouseholdContext> {
+  const hh = await getHousehold();
+  if (!hh) redirect("/welcome");
+  return hh;
+}
