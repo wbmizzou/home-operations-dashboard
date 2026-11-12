@@ -3,6 +3,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { softDeleteProject } from "@/lib/projectActions";
+import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
+import { approxMonths, ruleFromMonths, type Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
 import { DIY_HIRE, PRIORITIES, SEASONS, STATUSES, type Project } from "@/lib/constants";
 
@@ -16,17 +18,23 @@ type Props = {
   hideSubmit?: boolean;
   owners: string[];
   defaultOwner?: string | null;
+  /** Anchor for converting an old "every N months" setting into a pattern (last service, or when it was added). */
+  seedDate?: string | null;
   categories: { id: string; name: string }[];
   projects: { id: string; title: string }[];
   initial?: Project;
 };
 
-export default function ProjectForm({ categories, projects, initial, formId, hideSubmit, owners, defaultOwner }: Props) {
+export default function ProjectForm({ categories, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate }: Props) {
   const router = useRouter();
   const [seasons, setSeasons] = useState<string[]>(initial?.seasons ?? []);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [catChoice, setCatChoice] = useState(initial?.category_id ?? "");
+  // Repeat pattern: existing tasks with only "every N months" start from an equivalent pattern.
+  const initialRule = initial?.recurrence ?? (initial?.recurrence_months ? ruleFromMonths(initial.recurrence_months, seedDate ?? initial.target_date ?? new Date().toISOString().slice(0, 10)) : null);
+  const [repeats, setRepeats] = useState(!!initialRule);
+  const [rule, setRule] = useState<Recurrence>(initialRule ?? defaultRule());
   const [formKey, setFormKey] = useState(0); // bumped to reset the form after "Save & add another"
   const editing = !!initial;
   const formRef = useRef<HTMLFormElement>(null);
@@ -95,7 +103,8 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       quoted_cost: num(f.get("quoted_cost")),
       actual_cost: num(f.get("actual_cost")),
       blocked_by: str(f.get("blocked_by")),
-      recurrence_months: num(f.get("recurrence_months")),
+      recurrence: repeats ? rule : null,
+      recurrence_months: repeats ? approxMonths(rule) : null,
       completed_on,
     };
 
@@ -107,7 +116,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     if (another) {
       // Fresh blank form for the next one.
       toast(`Saved “${values.title}” ✓ — ready for the next one`);
-      setSeasons([]); setCatChoice(""); setFormKey((k) => k + 1); setBusy(false);
+      setSeasons([]); setCatChoice(""); setRepeats(false); setRule(defaultRule()); setFormKey((k) => k + 1); setBusy(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
       router.refresh();
       return;
@@ -124,7 +133,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       title: `${initial.title} (copy)`, category_id: initial.category_id, priority: initial.priority, seasons: initial.seasons,
       diy_hire: initial.diy_hire, owner: initial.owner, status: "Not Started", target_date: null, target_note: initial.target_note,
       next_action: initial.next_action, notes: initial.notes, estimated_cost: initial.estimated_cost, quoted_cost: null, actual_cost: null,
-      blocked_by: initial.blocked_by, recurrence_months: initial.recurrence_months, completed_on: null,
+      blocked_by: initial.blocked_by, recurrence_months: initial.recurrence_months, recurrence: initial.recurrence, completed_on: null,
     };
     const { data, error } = await createClient().from("projects").insert(copy).select("id").single();
     if (error) { setError(error.message); setBusy(false); return; }
@@ -207,8 +216,13 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
           <input name="completed_on" type="date" defaultValue={initial?.completed_on ?? ""} className="input" /></label>
       )}
 
-      <label className="block"><Label>Repeats every (months) — for recurring maintenance</Label>
-        <input name="recurrence_months" type="number" min="1" inputMode="numeric" defaultValue={initial?.recurrence_months ?? ""} className="input" placeholder="e.g. 12" /></label>
+      <div>
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" className="h-5 w-5 accent-[var(--moss)]" checked={repeats} onChange={(e) => { markDirty(); setRepeats(e.target.checked); }} />
+          🔁 Repeats — recurring upkeep
+        </label>
+        {repeats && <div className="mt-2"><RecurrenceEditor value={rule} onChange={(r) => { markDirty(); setRule(r); }} /></div>}
+      </div>
       <label className="block"><Label>Notes</Label><textarea name="notes" rows={3} defaultValue={initial?.notes ?? ""} className="input" /></label>
 
       <div className="flex flex-wrap items-center gap-3">

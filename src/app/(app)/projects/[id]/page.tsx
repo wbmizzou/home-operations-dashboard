@@ -38,8 +38,8 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
           ⛔ This is waiting on <Link href={`/projects/${blocker.id}`} className="font-semibold underline">{blocker.title}</Link>, which is still <b>{blocker.status}</b>.
         </p>
       )}
-      {isRecurring(p) && p.status !== "Complete" && <ServiceLog projectId={p.id} months={p.recurrence_months} logs={logs ?? []} />}
-      <ProjectForm formId="project-form" hideSubmit owners={hh.owners} categories={cats ?? []} projects={others ?? []} initial={p} />
+      {isRecurring(p) && p.status !== "Complete" && <ServiceLog projectId={p.id} months={p.recurrence_months} logs={logs ?? []} target={p.target_date} rule={p.recurrence} />}
+      <ProjectForm formId="project-form" hideSubmit owners={hh.owners} seedDate={logs?.[0]?.performed_on ?? (p as Project & { created_at?: string }).created_at?.slice(0, 10) ?? null} categories={cats ?? []} projects={others ?? []} initial={p} />
     </>
   );
 }

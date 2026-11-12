@@ -40,6 +40,7 @@ export type Project = {
   actual_cost: number | null;
   blocked_by: string | null;
   recurrence_months: number | null;
+  recurrence: import("@/lib/rrule").Recurrence | null;
   completed_on: string | null;
   next_action: string | null;
   categories: { name: string } | null;

@@ -1,16 +1,17 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { money } from "@/lib/constants";
-import { addMonths } from "@/lib/recurrence";
+import { nextDueDate } from "@/lib/recurrence";
+import { describe, type Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
 
 export type Log = { id: string; performed_on: string; cost: number | null; notes: string | null };
 
 const fmt = (d: string) => new Date(d + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export default function ServiceLog({ projectId, months, logs }: { projectId: string; months: number | null; logs: Log[] }) {
+export default function ServiceLog({ projectId, months, logs, target, rule }: { projectId: string; months: number | null; logs: Log[]; target: string | null; rule: Recurrence | null }) {
   const router = useRouter();
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
@@ -19,18 +20,38 @@ export default function ServiceLog({ projectId, months, logs }: { projectId: str
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const last = logs[0]?.performed_on;
-  const due = last && months ? addMonths(last, months) : null;
+  const last = logs[0]?.performed_on ?? null;
+  const due = nextDueDate(last, months, target, null, rule);
+  const future = date > today;
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Picking a future date here reschedules the task: it becomes the target (next due) date,
+  // saved straight away without logging anything.
+  async function reschedule(d: string) {
+    const { error } = await createClient().from("projects").update({ target_date: d }).eq("id", projectId);
+    if (error) { setError(error.message); return; }
+    // Keep the project form below in step, so a later "Save changes" doesn't undo this.
+    const field = (document.getElementById("project-form") as HTMLFormElement | null)?.elements.namedItem("target_date") as HTMLInputElement | null;
+    if (field) field.value = d;
+    toast(`Next due set to ${fmt(d)} ✓`);
+    router.refresh();
+  }
   const overdue = !!due && due < today;
   const total = logs.reduce((s, l) => s + Number(l.cost ?? 0), 0);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
+    if (future) return; // future dates reschedule instead (handled on change)
     setBusy(true); setError(null);
-    const { error } = await createClient().from("service_logs").insert({
+    const supabase = createClient();
+    const { error } = await supabase.from("service_logs").insert({
       project_id: projectId, performed_on: date, cost: cost === "" ? null : Number(cost), notes: notes.trim() || null,
     });
     if (error) { setError(error.message); setBusy(false); return; }
+    // A logged service puts the task back on its regular schedule.
+    await supabase.from("projects").update({ target_date: null }).eq("id", projectId);
+    const field = (document.getElementById("project-form") as HTMLFormElement | null)?.elements.namedItem("target_date") as HTMLInputElement | null;
+    if (field) field.value = "";
     setCost(""); setNotes(""); setBusy(false);
     toast("Service logged ✓");
     router.refresh();
@@ -47,20 +68,28 @@ export default function ServiceLog({ projectId, months, logs }: { projectId: str
     <section className="card mt-6 p-5">
       <h2 className="text-xl">🔧 Service log</h2>
       <p className="mt-1 text-sm text-muted">
-        {months ? `Repeats every ${months} month${months === 1 ? "" : "s"}. ` : "Set “Repeats every (months)” below to track when the next one is due. "}
-        {due ? <span className={overdue ? "font-semibold text-berry" : ""}>{overdue ? "Overdue since " : "Next due "}{fmt(due)}.</span> : logs.length === 0 ? "Nothing logged yet." : null}
-        {logs.length > 0 && <> Total spent: <b>{money(total)}</b>.</>}
+        {rule ? `🔁 ${describe(rule)}. ` : months ? `Repeats every ${months} month${months === 1 ? "" : "s"}. ` : "Set a repeat pattern below to track when the next one is due. "}
+        {due ? <span className={overdue ? "font-semibold text-berry" : ""}>{overdue ? "Overdue since " : "Next due "}{fmt(due)}.</span> : rule && logs.length ? "The series has ended." : logs.length === 0 ? "Nothing logged yet." : null}
+        {logs.length > 0 && <> Upkeep spent: <b>{money(total)}</b> (not counted in home value).</>}
       </p>
 
       <form onSubmit={add} className="mt-4 grid gap-3 sm:grid-cols-[10rem_8rem_1fr_auto] sm:items-end">
         <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Date</span>
-          <input className="input" type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></label>
+          <input className="input" type="date" required value={date} onChange={(e) => {
+            const d = e.target.value;
+            setDate(d);
+            clearTimeout(timer.current);
+            if (d > today) timer.current = setTimeout(() => reschedule(d), 700); // wait for the date wheel to settle
+          }} /></label>
         <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Cost $</span>
           <input className="input" type="number" min="0" step="0.01" inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="0" /></label>
         <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Notes</span>
           <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Who did it, what was found…" /></label>
-        <button className="btn inline-flex" disabled={busy}>{busy ? "Saving…" : "Log service"}</button>
+        <button className="btn inline-flex disabled:opacity-50" disabled={busy || future}>{busy ? "Saving…" : future ? "Set as next due" : "Log service"}</button>
       </form>
+      {future && (
+        <p className="mt-2 text-sm text-muted">📅 A future date reschedules this task — it&apos;s saved as the next due date. Pick today or an earlier date to log a service instead.</p>
+      )}
       {error && <p className="mt-2 text-sm text-berry">{error}</p>}
 
       {logs.length > 0 && (

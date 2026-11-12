@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { addMonths, isRecurring } from "@/lib/recurrence";
+import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import ThemeToggle from "@/components/ThemeToggle";
+import RecurringStrip from "@/components/RecurringStrip";
 import { getHousehold } from "@/lib/household";
 import { currentSeason, type Project } from "@/lib/constants";
 import { Acorn, Footer, HeroScene } from "@/components/Whimsy";
@@ -55,16 +56,13 @@ export default async function Dashboard() {
   const completed = projects.filter((p) => p.status === "Complete");
 
   const serviceLogs = (logs ?? []) as unknown as { cost: number | null; performed_on: string; project_id: string; projects: { title: string } | null }[];
-  const spent =
-    completed.reduce((s, p) => s + Number(p.actual_cost ?? 0), 0) +
-    serviceLogs.reduce((s, l) => s + Number(l.cost ?? 0), 0);
+  // "Invested" is capital improvements only: final costs of completed projects.
+  // Recurring service costs are upkeep (opex) and are tracked on the Upkeep tab instead.
+  const spent = completed.reduce((s, p) => s + Number(p.actual_cost ?? 0), 0);
   const events: SpendEvent[] = [
     ...completed
       .filter((p) => p.completed_on && Number(p.actual_cost) > 0)
       .map((p) => ({ date: p.completed_on!, amount: Number(p.actual_cost), label: p.title })),
-    ...serviceLogs
-      .filter((l) => Number(l.cost) > 0)
-      .map((l) => ({ date: l.performed_on, amount: Number(l.cost), label: l.projects?.title ?? "Service" })),
   ];
 
   const catMap = new Map<string, { key: string; label: string; n: number; href: string; muted?: boolean }>();
@@ -83,18 +81,22 @@ export default async function Dashboard() {
   for (const l of serviceLogs) if (!lastService.get(l.project_id) || l.performed_on > lastService.get(l.project_id)!) lastService.set(l.project_id, l.performed_on);
   const soon = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10);
   const dated: Project[] = open.map((p) => {
-    if (p.recurrence_months && lastService.has(p.id)) return { ...p, target_date: addMonths(lastService.get(p.id)!, p.recurrence_months) };
+    if ((p.recurrence_months || p.recurrence) && lastService.has(p.id)) return { ...p, target_date: nextDueDate(lastService.get(p.id)!, p.recurrence_months, p.target_date, null, p.recurrence) };
     return p;
   });
   const upcoming = dated
-    .filter((p) => p.target_date && (p.recurrence_months ? p.target_date <= soon : p.target_date >= today && ["Scheduled", "Planned", "In Progress"].includes(p.status)))
+    .filter((p) => p.target_date && (p.recurrence_months || p.recurrence ? p.target_date <= soon : p.target_date >= today && ["Scheduled", "Planned", "In Progress"].includes(p.status)))
     .sort((a, b) => a.target_date!.localeCompare(b.target_date!)).slice(0, 5);
-  // Recurring upkeep: next due = last service + interval.
-  const recurring = open.filter(isRecurring).map((p) => {
-    const last = lastService.get(p.id);
-    return { p, last, due: last && p.recurrence_months ? addMonths(last, p.recurrence_months) : null };
-  }).sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"));
-  const fmtDue = (d: string) => new Date(d + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric" });
+  // Recurring upkeep: next due = last service + interval (before the first service: the target
+  // date, or the day it was added). The strip shows everything due within 30 days, soonest first;
+  // if nothing is that close, just the next one up.
+  const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const recurringAll = open.filter(isRecurring).map((p) => {
+    const last = lastService.get(p.id) ?? null;
+    return { p, logged: !!last, due: nextDueDate(last, p.recurrence_months, p.target_date, (p as Project & { created_at: string }).created_at, p.recurrence) };
+  }).filter((r) => r.due).sort((a, b) => a.due!.localeCompare(b.due!));
+  const dueSoon = recurringAll.filter((r) => r.due! <= in30);
+  const recurring = dueSoon.length ? dueSoon : recurringAll.slice(0, 1);
 
   const inMotion = open.filter((p) => ["Scheduled", "In Progress"].includes(p.status)).length;
 
@@ -113,22 +115,7 @@ export default async function Dashboard() {
       </header>
 
       {recurring.length > 0 && (
-        <section className="mt-4" aria-label="Recurring upkeep">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">🔁 Recurring upkeep</h2>
-          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-            {recurring.map(({ p, due }) => {
-              const overdue = !!due && due < today;
-              return (
-                <Link key={p.id} href={`/projects/${p.id}`} className="card min-w-[13rem] shrink-0 px-4 py-3">
-                  <div className="truncate font-semibold">{p.title}</div>
-                  <div className={`text-xs ${overdue ? "font-semibold text-berry" : "text-muted"}`}>
-                    {due ? (overdue ? `⏰ Overdue since ${fmtDue(due)}` : `Next due ${fmtDue(due)}`) : "No service logged yet — tap to log one"}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+        <RecurringStrip soon={dueSoon.length > 0} items={recurring.map(({ p, due, logged }) => ({ id: p.id, title: p.title, months: p.recurrence_months, rule: p.recurrence, due, logged }))} />
       )}
 
       <div className="mt-6 space-y-4">
@@ -165,8 +152,6 @@ export default async function Dashboard() {
 
       <Footer />
 
-      <Link href="/projects/new" aria-label="Add project"
-        className="btn fixed flex bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 h-14 w-14 !p-0 text-2xl shadow-lg md:hidden">＋</Link>
     </>
   );
 }

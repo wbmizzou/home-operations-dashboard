@@ -5,7 +5,7 @@ import ProjectListItem, { type ListProject } from "@/components/ProjectListItem"
 import SearchBox from "@/components/SearchBox";
 import { createClient } from "@/lib/supabase/server";
 import { getHousehold } from "@/lib/household";
-import { addMonths, isRecurring } from "@/lib/recurrence";
+import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import { STATUS_SORT_ORDER, money, type Project } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -105,7 +105,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   const soon = new Date(Date.now() + DUE_SOON_DAYS * 864e5).toISOString().slice(0, 10);
   const dueFor = (p: Project): ListProject["due"] => {
     if (p.status === "Complete") return null;
-    const date = p.recurrence_months && lastService.has(p.id) ? addMonths(lastService.get(p.id)!, p.recurrence_months) : p.target_date;
+    const date = isRecurring(p) ? nextDueDate(lastService.get(p.id) ?? null, p.recurrence_months, p.target_date, null, p.recurrence) : p.target_date;
     if (!date) return null;
     if (date < today) return { kind: "overdue", date };
     if (date <= soon) return { kind: "soon", date };
