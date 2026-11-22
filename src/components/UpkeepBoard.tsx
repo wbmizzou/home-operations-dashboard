@@ -8,7 +8,7 @@ import { prettyDate, type DueState } from "@/lib/recurrence";
 import { toast } from "@/lib/toast";
 import QuickLogSheet, { type LogTarget } from "@/components/QuickLogSheet";
 import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
-import { approxMonths, ruleFromMonths, type Recurrence } from "@/lib/rrule";
+import { approxMonths, parseYmd, ruleFromMonths, type Recurrence } from "@/lib/rrule";
 
 export type UpkeepTask = { id: string; title: string; months: number | null; rule: Recurrence | null; schedule: string; category: string | null; last: string | null; due: string | null; state: DueState };
 export type HistoryEntry = { id: string; projectId: string; title: string; date: string; cost: number | null; notes: string | null };
@@ -184,6 +184,20 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
   const [rule, setRule] = useState<Recurrence>(() => defaultRule(today));
   const [category, setCategory] = useState("");
   const [last, setLast] = useState("");
+
+  // Entering "Last done" re-anchors the pattern on that date, so the next one lands one
+  // interval later (e.g. every 2 years, last done Jun 1 2025 -> next Jun 1 2027).
+  function setLastDone(d: string) {
+    setLast(d);
+    if (!d) return;
+    const when = parseYmd(d);
+    setRule((r) => ({
+      ...r,
+      start: d,
+      ...(r.mode !== "nth" && (r.freq === "monthly" || r.freq === "yearly") ? { day: when.getDate() } : {}),
+      ...(r.freq === "yearly" && r.mode !== "nth" ? { month: when.getMonth() } : {}),
+    }));
+  }
   const [cost, setCost] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -218,7 +232,7 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
         <div><span className="mb-1 block text-sm font-medium text-muted">Repeats</span><RecurrenceEditor value={rule} onChange={setRule} /></div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Last done (optional)</span>
-            <input className="input" type="date" max={today} value={last} onChange={(e) => setLast(e.target.value)} /></label>
+            <input className="input" type="date" max={today} value={last} onChange={(e) => setLastDone(e.target.value)} /></label>
           <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Cost then $</span>
             <input className="input" type="number" min="0" step="0.01" inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} disabled={!last} placeholder="0" /></label>
         </div>
