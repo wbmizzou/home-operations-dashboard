@@ -4,19 +4,21 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { restoreProject } from "@/lib/projectActions";
 import { toast } from "@/lib/toast";
+import { friendlyError } from "@/lib/errors";
 
 const DAY = 864e5;
 
-export default function DeletedList({ items }: { items: { id: string; title: string; deleted_at: string }[] }) {
+export default function DeletedList({ items, canDeleteForever }: { items: { id: string; title: string; deleted_at: string }[]; canDeleteForever: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
 
   async function forever(id: string, title: string) {
     if (!window.confirm(`Delete “${title}” forever? This can't be undone.`)) return;
     setBusy(id);
-    const { error } = await createClient().from("projects").delete().eq("id", id);
+    const { data, error } = await createClient().from("projects").delete().eq("id", id).select("id");
     setBusy(null);
-    if (error) { toast(`Couldn't delete: ${error.message}`); return; }
+    if (error) { toast(`Couldn't delete: ${friendlyError(error)}`); return; }
+    if (!data?.length) { toast("Only the household owner can delete a project forever"); return; }
     toast(`“${title}” deleted for good`);
     router.refresh();
   }
@@ -36,8 +38,10 @@ export default function DeletedList({ items }: { items: { id: string; title: str
             </div>
             <button type="button" disabled={busy === p.id} onClick={async () => { setBusy(p.id); await restoreProject(p.id, p.title, router); setBusy(null); }}
               className="rounded-full border-2 border-moss px-3 py-1.5 text-sm font-semibold text-moss">Restore</button>
-            <button type="button" disabled={busy === p.id} onClick={() => forever(p.id, p.title)} aria-label={`Delete ${p.title} forever`}
-              className="rounded-full px-2 py-1.5 text-sm text-berry underline">Forever</button>
+            {canDeleteForever && (
+              <button type="button" disabled={busy === p.id} onClick={() => forever(p.id, p.title)} aria-label={`Delete ${p.title} forever`}
+                className="rounded-full px-2 py-1.5 text-sm text-berry underline">Forever</button>
+            )}
           </li>
         );
       })}

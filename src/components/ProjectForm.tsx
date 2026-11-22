@@ -7,6 +7,7 @@ import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
 import { approxMonths, ruleFromMonths, type Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
 import { DIY_HIRE, PRIORITIES, SEASONS, STATUSES, type Project } from "@/lib/constants";
+import { friendlyError } from "@/lib/errors";
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? null : Number(v));
 const str = (v: FormDataEntryValue | null) => (v === null || String(v).trim() === "" ? null : String(v).trim());
@@ -74,7 +75,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       if (existing) category_id = existing.id;
       else {
         const { data, error } = await supabase.from("categories").insert({ name: catName }).select("id").single();
-        if (error) { setError(error.message); setBusy(false); return; }
+        if (error) { setError(friendlyError(error)); setBusy(false); return; }
         category_id = data.id;
       }
     } else if (catChoice) {
@@ -111,7 +112,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     const { error } = editing
       ? await supabase.from("projects").update(values).eq("id", initial!.id)
       : await supabase.from("projects").insert(values);
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(friendlyError(error)); setBusy(false); return; }
     dirty.current = false;
     if (another) {
       // Fresh blank form for the next one.
@@ -136,7 +137,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       blocked_by: initial.blocked_by, recurrence_months: initial.recurrence_months, recurrence: initial.recurrence, completed_on: null,
     };
     const { data, error } = await createClient().from("projects").insert(copy).select("id").single();
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(friendlyError(error)); setBusy(false); return; }
     dirty.current = false;
     toast("Duplicated ✓ — you're editing the copy");
     router.push(`/projects/${data.id}`);

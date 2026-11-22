@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PRIORITIES, STATUSES, money } from "@/lib/constants";
 import { softDeleteProject } from "@/lib/projectActions";
 import { toast } from "@/lib/toast";
+import { friendlyError } from "@/lib/errors";
 
 export type ListProject = {
   id: string;
@@ -83,7 +84,7 @@ export default function ProjectListItem({ p }: { p: ListProject }) {
     const prev = { status: p.status, completed_on: p.completedOn };
     const values = { status: next, completed_on: next === "Complete" ? (p.completedOn ?? today()) : null };
     const { error } = await createClient().from("projects").update(values).eq("id", p.id);
-    if (error) { toast(`Couldn't change status: ${error.message}`); return; }
+    if (error) { toast(`Couldn't change status: ${friendlyError(error)}`); return; }
     router.refresh();
     const undo = { label: "Undo", run: async () => { await createClient().from("projects").update(prev).eq("id", p.id); router.refresh(); toast("Status restored"); } };
     if (next === "Complete") {
