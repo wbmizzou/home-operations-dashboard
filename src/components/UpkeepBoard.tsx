@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { money } from "@/lib/constants";
 import { prettyDate, type DueState } from "@/lib/recurrence";
@@ -42,6 +42,16 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
   const [logging, setLogging] = useState<LogTarget | null>(null);
   const [adding, setAdding] = useState(false);
   const [starterOpen, setStarterOpen] = useState(tasks.length < 3);
+  // "Don't show this" hides the starter checklist on this device; a link at the bottom brings it back.
+  const STARTER_KEY = "hh-starter-dismissed";
+  const [starterDismissed, setStarterDismissed] = useState(true); // hidden until we've checked, so it never flashes
+  useEffect(() => { try { setStarterDismissed(localStorage.getItem(STARTER_KEY) === "1"); } catch { setStarterDismissed(false); } }, []);
+  function dismissStarter(hide: boolean) {
+    try { if (hide) localStorage.setItem(STARTER_KEY, "1"); else localStorage.removeItem(STARTER_KEY); } catch {}
+    setStarterDismissed(hide);
+    if (hide) toast("Starter checklist hidden", { label: "Undo", run: () => dismissStarter(false) });
+    else setStarterOpen(true);
+  }
   const lower = existingTitles.map((t) => t.toLowerCase());
   const suggestions = STARTER.filter((s) => !lower.some((t) => t.includes(s.match)));
   const [picked, setPicked] = useState<string[]>([]);
@@ -92,12 +102,16 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
       </ul>
 
       {/* Starter checklist */}
-      {suggestions.length > 0 && (
+      {suggestions.length > 0 && !starterDismissed && (
         <section className="card mt-5 p-4">
-          <button type="button" onClick={() => setStarterOpen(!starterOpen)} aria-expanded={starterOpen} className="flex w-full items-center justify-between text-left">
-            <span className="text-lg font-semibold">🧺 Starter checklist</span>
-            <span className="text-sm text-muted">{starterOpen ? "Hide" : `${suggestions.length} ideas`}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setStarterOpen(!starterOpen)} aria-expanded={starterOpen} className="flex min-w-0 flex-1 items-center justify-between text-left">
+              <span className="text-lg font-semibold">🧺 Starter checklist</span>
+              <span className="text-sm text-muted">{starterOpen ? "Collapse" : `${suggestions.length} ideas`}</span>
+            </button>
+            <button type="button" onClick={() => dismissStarter(true)} aria-label="Don't show the starter checklist"
+              className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-muted hover:text-ink">✕ Don&apos;t show</button>
+          </div>
           {starterOpen && (
             <>
               <p className="mt-1 text-sm text-muted">Common chores most homes need. Tick the ones that apply.</p>
@@ -149,6 +163,12 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
           );
         })}
       </section>
+
+      {suggestions.length > 0 && starterDismissed && (
+        <p className="mt-6 text-center text-sm">
+          <button type="button" onClick={() => dismissStarter(false)} className="text-muted underline">🧺 Show the starter checklist</button>
+        </p>
+      )}
 
       <QuickLogSheet task={logging} onClose={() => setLogging(null)} />
       {adding && <NewTaskSheet categories={categories} defaultOwner={defaultOwner} onClose={() => setAdding(false)} />}
