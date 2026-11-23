@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Cottage } from "@/components/Whimsy";
+import { friendlyError } from "@/lib/errors";
 
 export const INVITE_KEY = "hh-invite-code";
 
@@ -26,10 +27,12 @@ export default function WelcomeForm({ initialCode }: { initialCode: string }) {
     e.preventDefault();
     setBusy(true); setError(null);
     const supabase = createClient();
-    const { error } = mode === "start"
+    const { data, error } = mode === "start"
       ? await supabase.rpc("create_household", { p_name: homeName, p_display_name: myName })
       : await supabase.rpc("join_household", { p_code: code, p_display_name: myName });
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(friendlyError(error)); setBusy(false); return; }
+    // join_household returns null (not an error) for a wrong, used or expired code.
+    if (!data) { setError("That invite code doesn't match a household, or it has expired or already been used. Ask for a fresh invite link."); setBusy(false); return; }
     try { localStorage.removeItem(INVITE_KEY); } catch {}
     router.replace("/"); router.refresh();
   }
@@ -58,11 +61,11 @@ export default function WelcomeForm({ initialCode }: { initialCode: string }) {
             <input className="input" required maxLength={80} value={homeName} onChange={(e) => setHomeName(e.target.value)} placeholder="e.g. The Maple Street House" /></label>
         ) : (
           <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Invite code</span>
-            <input className="input uppercase tracking-widest" required maxLength={12} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="8 letters & numbers" autoCapitalize="characters" /></label>
+            <input className="input uppercase tracking-widest" required maxLength={16} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="XXXX-XXXX-XXXX" autoCapitalize="characters" /></label>
         )}
         <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Your name <span className="font-normal">(shown as project owner)</span></span>
           <input className="input" required maxLength={40} value={myName} onChange={(e) => setMyName(e.target.value)} placeholder="e.g. Sam" /></label>
-        {mode === "join" && <p className="text-xs text-muted">Ask someone in the household for the code (Settings → Invite). You&apos;ll see all of their projects.</p>}
+        {mode === "join" && <p className="text-xs text-muted">Ask someone in the household for the code (Settings → Invite). You&apos;ll see and edit all of their projects, so only join a household you know.</p>}
         {error && <p className="text-sm text-berry">{error}</p>}
         <button className="btn inline-flex w-full" disabled={busy}>{busy ? "…" : mode === "start" ? "Create my household" : "Join household"}</button>
       </form>

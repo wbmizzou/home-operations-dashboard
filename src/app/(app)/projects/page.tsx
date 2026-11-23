@@ -48,7 +48,9 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   const owners = list(sp.owner).filter((o) => o === "none" || hh.owners.includes(o));
   if (owners.length) {
     const named = owners.filter((o) => o !== "none");
-    const parts = [named.length ? `owner.in.(${named.join(",")})` : "", owners.includes("none") ? "owner.is.null" : ""].filter(Boolean);
+    // Owner names are free text (display names), so quote each one for PostgREST's filter syntax.
+    const quoted = named.map((o) => `"${o.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`);
+    const parts = [named.length ? `owner.in.(${quoted.join(",")})` : "", owners.includes("none") ? "owner.is.null" : ""].filter(Boolean);
     query = query.or(parts.join(","));
   }
 

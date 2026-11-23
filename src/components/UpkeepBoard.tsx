@@ -9,6 +9,7 @@ import { toast } from "@/lib/toast";
 import QuickLogSheet, { type LogTarget } from "@/components/QuickLogSheet";
 import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
 import { approxMonths, parseYmd, ruleFromMonths, type Recurrence } from "@/lib/rrule";
+import { friendlyError } from "@/lib/errors";
 
 export type UpkeepTask = { id: string; title: string; months: number | null; rule: Recurrence | null; schedule: string; category: string | null; last: string | null; due: string | null; state: DueState };
 export type HistoryEntry = { id: string; projectId: string; title: string; date: string; cost: number | null; notes: string | null };
@@ -65,7 +66,7 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
     }));
     const { error } = await createClient().from("projects").insert(rows);
     setBusy(false);
-    if (error) return toast(`Couldn't add: ${error.message}`);
+    if (error) return toast(`Couldn't add: ${friendlyError(error)}`);
     toast(`Added ${rows.length} upkeep task${rows.length === 1 ? "" : "s"} ✓ — log when each was last done`);
     setPicked([]); router.refresh();
   }
@@ -209,7 +210,7 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
     const { data, error } = await supabase.from("projects").insert({
       title: title.trim(), status: "Recurring", recurrence: rule, recurrence_months: approxMonths(rule), priority: 2, owner: defaultOwner, seasons: [], category_id: category || null,
     }).select("id").single();
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(friendlyError(error)); setBusy(false); return; }
     if (last) {
       const { error: logError } = await supabase.from("service_logs").insert({ project_id: data.id, performed_on: last, cost: cost === "" ? null : Number(cost) });
       if (logError) { setError(logError.message); setBusy(false); return; }

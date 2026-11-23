@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { nextDueDate, prettyDate } from "@/lib/recurrence";
 import type { Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
+import { friendlyError } from "@/lib/errors";
 
 export type LogTarget = { id: string; title: string; months: number | null; rule?: Recurrence | null };
 
@@ -28,7 +29,7 @@ export default function QuickLogSheet({ task, onClose }: { task: LogTarget | nul
     });
     if (!error) await supabase.from("projects").update({ target_date: null }).eq("id", task!.id); // back on the regular schedule
     setBusy(false);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(friendlyError(error)); return; }
     const nd = nextDueDate(date, task!.months, null, null, task!.rule ?? null);
     const next = nd ? ` — next due ${prettyDate(nd)}` : task!.rule ? " — that was the last one in the series" : "";
     toast(`Logged “${task!.title}” ✓${next}`);

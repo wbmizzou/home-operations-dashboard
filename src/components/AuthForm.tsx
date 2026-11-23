@@ -5,6 +5,7 @@ import { Cottage } from "@/components/Whimsy";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { friendlyError } from "@/lib/errors";
 
 export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
@@ -14,6 +15,8 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [mfaFactor, setMfaFactor] = useState<string | null>(null); // set when a 6-digit code is still needed
+  const [otp, setOtp] = useState("");
 
   // Invite links look like /signup?code=ABCD1234. Keep the code until the welcome step.
   useEffect(() => {
@@ -23,16 +26,50 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
     try { localStorage.setItem("hh-invite-code", code.toUpperCase()); } catch {}
   }, []);
 
+  // Signed in with a password but two-step sign-in is on (the proxy sends people here with ?mfa=1).
+  useEffect(() => {
+    if (mode === "login" && new URLSearchParams(window.location.search).get("mfa") === "1") needsCode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** If this session still needs the authenticator code, ask for it. Returns true when it does. */
+  async function needsCode(): Promise<boolean> {
+    const supabase = createClient();
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (!aal || aal.nextLevel !== "aal2" || aal.currentLevel === "aal2") return false;
+    const { data } = await supabase.auth.mfa.listFactors();
+    const factor = data?.totp[0];
+    if (!factor) return false;
+    setMfaFactor(factor.id);
+    return true;
+  }
+
+  async function submitCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactor) return;
+    setBusy(true); setError(null);
+    const { error } = await createClient().auth.mfa.challengeAndVerify({ factorId: mfaFactor, code: otp.replace(/\s/g, "") });
+    setBusy(false);
+    if (error) { setError(friendlyError(error)); return; }
+    router.replace("/"); router.refresh();
+  }
+
+  async function cancelCode() {
+    await createClient().auth.signOut();
+    setMfaFactor(null); setOtp(""); setPassword("");
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError(null); setInfo(null);
     const supabase = createClient();
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setError(error.message); else { router.replace("/"); router.refresh(); }
+      if (error) setError(friendlyError(error));
+      else if (!(await needsCode())) { router.replace("/"); router.refresh(); }
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) setError(error.message);
+      if (error) setError(friendlyError(error));
       else if (data.session) { router.replace("/welcome"); router.refresh(); }
       else setInfo("Check your email to confirm your account, then log in.");
     }
@@ -46,6 +83,17 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <h1 className="mt-3 text-3xl text-moss">Home Hollow</h1>
         <p className="mt-1 text-sm text-muted">A cozy home for projects &amp; upkeep</p>
       </div>
+      {mfaFactor ? (
+        <form onSubmit={submitCode} className="card space-y-3 p-5">
+          <h2 className="text-xl">One more step 🔐</h2>
+          <p className="text-sm text-muted">Enter the 6-digit code from your authenticator app.</p>
+          <input className="input text-center tracking-[0.3em]" inputMode="numeric" autoComplete="one-time-code" required maxLength={8} autoFocus
+            value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" aria-label="6-digit code" />
+          {error && <p className="text-sm text-berry">{error}</p>}
+          <button className="btn inline-flex w-full" disabled={busy}>{busy ? "…" : "Verify"}</button>
+          <button type="button" onClick={cancelCode} className="w-full text-center text-sm text-muted underline">Use a different account</button>
+        </form>
+      ) : (
       <form onSubmit={submit} className="card space-y-3 p-5">
         <h2 className="text-xl">{mode === "login" ? "Welcome home 🍂" : "Create your account 🌱"}</h2>
         {inviteCode && <p className="rounded-xl bg-moss/10 p-2 text-sm text-moss">🔑 You&apos;ve been invited to a household (code {inviteCode}). {mode === "login" ? "Log in" : "Sign up"} and you&apos;ll join it next.</p>}
@@ -56,9 +104,10 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {info && <p className="text-sm text-moss">{info}</p>}
         <button className="btn inline-flex w-full" disabled={busy}>{busy ? "…" : mode === "login" ? "Step inside" : "Sign up"}</button>
       </form>
+      )}
       <p className="mt-4 text-center text-sm text-muted">
-        {mode === "login" ? <>New here? <Link href={inviteCode ? `/signup?code=${inviteCode}` : "/signup"} className="text-moss underline">Create an account</Link></>
-          : <>Have an account? <Link href={inviteCode ? `/login?code=${inviteCode}` : "/login"} className="text-moss underline">Log in</Link></>}
+        {mode === "login" ? <>New here? <Link href={inviteCode ? `/signup?code=${encodeURIComponent(inviteCode)}` : "/signup"} className="text-moss underline">Create an account</Link></>
+          : <>Have an account? <Link href={inviteCode ? `/login?code=${encodeURIComponent(inviteCode)}` : "/login"} className="text-moss underline">Log in</Link></>}
       </p>
       <InstallHint />
     </div>
