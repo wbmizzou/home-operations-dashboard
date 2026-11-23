@@ -1,10 +1,13 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PRIORITIES } from "@/lib/constants";
+import type { PriorityLevel } from "@/lib/priorities";
+export type { PriorityLevel } from "@/lib/priorities";
 
 export type Household = { id: string; name: string; hero: "cottage" | "hollow"; invite_code: string; invite_expires_at: string };
 export type Member = { user_id: string; display_name: string; role: "owner" | "member" };
-export type HouseholdContext = { household: Household; members: Member[]; me: string | null; myUserId: string | null; isOwner: boolean; owners: string[] };
+export type HouseholdContext = { household: Household; members: Member[]; me: string | null; myUserId: string | null; isOwner: boolean; owners: string[]; priorities: PriorityLevel[] };
 
 /**
  * The signed-in person's household, members and owner choices (cached per request).
@@ -20,11 +23,12 @@ export const getHousehold = cache(async (): Promise<HouseholdContext | null> => 
   }
   if (!household) return null;
 
-  const [{ data: members }, { data: me }, { data: used }, { data: auth }] = await Promise.all([
+  const [{ data: members }, { data: me }, { data: used }, { data: auth }, { data: levels }] = await Promise.all([
     supabase.from("household_members").select("user_id, display_name, role").order("joined_at"),
     supabase.rpc("current_owner"),
     supabase.from("projects").select("owner").not("owner", "is", null),
     supabase.auth.getUser(),
+    supabase.from("priority_levels").select("level, label, focus").order("level"),
   ]);
   const myUserId = auth.user?.id ?? null;
   const isOwner = (members ?? []).some((m) => m.user_id === myUserId && m.role === "owner");
@@ -32,7 +36,11 @@ export const getHousehold = cache(async (): Promise<HouseholdContext | null> => 
   const usedOwners = [...new Set((used ?? []).map((r) => r.owner as string))];
   // Members first, then "Joint" for shared work, then any older owner names still on projects.
   const owners = [...new Set([...names, ...(names.length > 1 || usedOwners.includes("Joint") ? ["Joint"] : []), ...usedOwners])];
-  return { household: household as Household, members: (members ?? []) as Member[], me: (me as string | null) ?? null, myUserId, isOwner, owners };
+  // The household's own priority levels (fall back to the standard P1–P5 if none are set up).
+  const priorities: PriorityLevel[] = levels?.length
+    ? levels.map((l) => ({ value: l.level as number, label: l.label as string, focus: (l.focus as string | null) ?? null }))
+    : PRIORITIES.map((p) => ({ value: p.value, label: p.label, focus: p.focus }));
+  return { household: household as Household, members: (members ?? []) as Member[], me: (me as string | null) ?? null, myUserId, isOwner, owners, priorities };
 });
 
 /**

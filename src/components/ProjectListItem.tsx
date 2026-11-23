@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { PRIORITIES, STATUSES, money } from "@/lib/constants";
+import { STATUSES, money } from "@/lib/constants";
+import { priorityTone } from "@/lib/priorities";
 import { softDeleteProject } from "@/lib/projectActions";
 import { toast } from "@/lib/toast";
 import { friendlyError } from "@/lib/errors";
@@ -16,6 +17,7 @@ export type ListProject = {
   completedOn: string | null;
   owner: string | null;
   priority: number;
+  priorityLabel: string;
   when: string | null;
   cost: number | null;
   /** Overdue / due-soon tag, computed on the server (target date, or next service for recurring work). */
@@ -92,7 +94,7 @@ export default function ProjectListItem({ p }: { p: ListProject }) {
     } else toast(`Moved to ${next} ✓`, undo);
   }
 
-  const label = PRIORITIES.find((x) => x.value === p.priority)?.label;
+  const label = p.priorityLabel;
 
   return (
     <li ref={rowRef} className="relative overflow-hidden">
@@ -128,7 +130,7 @@ export default function ProjectListItem({ p }: { p: ListProject }) {
           )}
         </Link>
         <div className="flex shrink-0 flex-col items-end gap-1 py-2">
-          <div className={`text-sm font-semibold ${p.priority === 1 ? "text-berry" : p.priority === 2 ? "text-gold" : "text-moss"}`}>{label}</div>
+          <div className={`text-sm font-semibold ${priorityTone(p.priority)}`}>{label}</div>
           <button type="button" onClick={() => { if (!moved.current && offset === 0) setStatusOpen(true); }}
             aria-label={`Status: ${p.status}. Tap to change.`}
             className="rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-muted active:scale-95">

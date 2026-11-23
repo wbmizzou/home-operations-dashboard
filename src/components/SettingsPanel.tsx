@@ -19,8 +19,8 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 const pretty = (code: string) => (code.length === 12 ? code.match(/.{4}/g)!.join("-") : code);
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-export default function SettingsPanel({ household, members, myUserId, isOwner, email, activity, inviteExpired }:
-  { household: Household; members: Member[]; myUserId: string; isOwner: boolean; email: string; activity: Activity[]; inviteExpired: boolean }) {
+export default function SettingsPanel({ household, members, myUserId, isOwner, email, activity, inviteExpired, children }:
+  { household: Household; members: Member[]; myUserId: string; isOwner: boolean; email: string; activity: Activity[]; inviteExpired: boolean; children?: React.ReactNode }) {
   const router = useRouter();
   const me = members.find((m) => m.user_id === myUserId);
   const [homeName, setHomeName] = useState(household.name);
@@ -123,6 +123,8 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
         )}
         {isOwner && <button type="button" onClick={newCode} className="text-sm text-muted underline">Make a new code{expired ? "" : " (stops the old one)"}</button>}
       </Card>
+
+      {children}
 
       <Card title="👤 You">
         <form onSubmit={saveMe} className="flex gap-2">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Acorn } from "@/components/Whimsy";
-import { PIPELINE_STAGES, PRIORITIES, SEASONS, money, type Project } from "@/lib/constants";
+import { PIPELINE_STAGES, SEASONS, money, type Project } from "@/lib/constants";
+import { priorityName, type PriorityLevel } from "@/lib/priorities";
 
 const q = encodeURIComponent;
 
@@ -98,17 +99,18 @@ export function RankedBars({ title, hint, rows }: { title: string; hint?: string
   );
 }
 
-export function priorityRows(open: Project[]) {
-  return PRIORITIES.map((p) => ({
-    key: `p${p.value}`, label: `${p.label} · ${p.focus}`, n: open.filter((x) => x.priority === p.value).length,
+export function priorityRows(open: Project[], levels: PriorityLevel[]) {
+  return levels.map((p) => ({
+    key: `p${p.value}`, label: priorityName(p), n: open.filter((x) => x.priority === p.value).length,
     href: `/projects?open=1&priority=${p.value}`,
   }));
 }
 
 /* 4 · Season x priority heatmap; "Anytime" counts in every season */
-export function SeasonHeatmap({ open }: { open: Project[] }) {
+export function SeasonHeatmap({ open, levels }: { open: Project[]; levels: PriorityLevel[] }) {
   const seasons = SEASONS.filter((s) => s !== "Anytime");
-  const prios = PRIORITIES.filter((p) => p.value <= 4);
+  // The first four levels, plus any later level that has open work (up to six columns).
+  const prios = levels.filter((p, i) => i < 4 || open.some((x) => x.priority === p.value)).slice(0, 6);
   const cell = (s: string, pr: number) => open.filter((p) => p.priority === pr && (p.seasons.includes(s) || p.seasons.includes("Anytime"))).length;
   const max = Math.max(1, ...seasons.flatMap((s) => prios.map((p) => cell(s, p.value))));
   return (
