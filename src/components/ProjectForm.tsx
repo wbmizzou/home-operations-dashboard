@@ -26,6 +26,10 @@ type Props = {
   initial?: Project;
 };
 
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
+}
+
 export default function ProjectForm({ categories, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate }: Props) {
   const router = useRouter();
   const [seasons, setSeasons] = useState<string[]>(initial?.seasons ?? []);
@@ -151,8 +155,6 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     if (err) { setError(err); setBusy(false); return; }
     router.push("/projects");
   }
-
-  const Label = ({ children }: { children: React.ReactNode }) => <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
 
   return (
     <form key={formKey} ref={formRef} id={formId} onSubmit={submit} onChange={markDirty} className="card mt-4 space-y-4 p-5">

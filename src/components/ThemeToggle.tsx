@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useLocalStorage } from "@/lib/useBrowserValue";
 
 type Theme = "system" | "light" | "dark";
 const KEY = "hh-theme";
@@ -8,14 +8,11 @@ const LABEL: Record<Theme, string> = { system: "🖥️ Auto", light: "☀️ Li
 
 /** Cycles Auto (follow the device) → Light → Dark. Remembered on this device. */
 export default function ThemeToggle({ className = "" }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>("system");
-  useEffect(() => {
-    try { setTheme((localStorage.getItem(KEY) as Theme) || "system"); } catch {}
-  }, []);
+  const [stored, store] = useLocalStorage(KEY);
+  const theme: Theme = stored === "light" || stored === "dark" ? stored : "system";
 
   function apply(next: Theme) {
-    setTheme(next);
-    try { if (next === "system") localStorage.removeItem(KEY); else localStorage.setItem(KEY, next); } catch {}
+    store(next === "system" ? null : next);
     const root = document.documentElement;
     if (next === "system") delete root.dataset.theme; else root.dataset.theme = next;
     // Keep the phone's status bar in step with the page background.

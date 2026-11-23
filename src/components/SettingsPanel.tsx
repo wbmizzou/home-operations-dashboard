@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useBrowserValue } from "@/lib/useBrowserValue";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -18,21 +19,19 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 const pretty = (code: string) => (code.length === 12 ? code.match(/.{4}/g)!.join("-") : code);
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-export default function SettingsPanel({ household, members, myUserId, isOwner, email, activity }:
-  { household: Household; members: Member[]; myUserId: string; isOwner: boolean; email: string; activity: Activity[] }) {
+export default function SettingsPanel({ household, members, myUserId, isOwner, email, activity, inviteExpired }:
+  { household: Household; members: Member[]; myUserId: string; isOwner: boolean; email: string; activity: Activity[]; inviteExpired: boolean }) {
   const router = useRouter();
   const me = members.find((m) => m.user_id === myUserId);
   const [homeName, setHomeName] = useState(household.name);
   const [myName, setMyName] = useState(me?.display_name ?? "");
   const [code, setCode] = useState(household.invite_code);
   const expires = household.invite_expires_at; // refreshed from the server after a new code
-  const [origin, setOrigin] = useState("");
+  const origin = useBrowserValue(() => window.location.origin, "");
   const [confirmDelete, setConfirmDelete] = useState("");
   const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => { setOrigin(window.location.origin); setNow(Date.now()); }, []);
   const [fresh, setFresh] = useState(false); // a code made on this page is valid even before the refresh lands
-  const expired = !fresh && now !== null && new Date(expires).getTime() <= now;
+  const expired = !fresh && inviteExpired;
   const link = `${origin}/signup?code=${code}`;
   const supabase = createClient();
   const owner = members.find((m) => m.role === "owner");

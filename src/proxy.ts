@@ -1,8 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAuthCode } from "@/lib/inviteCode";
 
 // Exact paths (or their sub-paths) that don't need a signed-in user.
-const PUBLIC_PATHS = ["/login", "/signup", "/api/keepalive"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth/confirm", "/api/keepalive"];
 const AUTH_PAGES = ["/login", "/signup"];
 const under = (path: string, p: string) => path === p || path.startsWith(`${p}/`);
 
@@ -30,6 +31,15 @@ function contentSecurityPolicy(nonce: string) {
 }
 
 export async function proxy(request: NextRequest) {
+  // A sign-up confirmation link that fell back to the site's home page (?code=<uuid>, or an error for
+  // an expired link): finish it on /auth/confirm before anything mistakes the code for an invite code.
+  const params = request.nextUrl.searchParams;
+  if (request.nextUrl.pathname !== "/auth/confirm" && (isAuthCode(params.get("code")) || params.has("error_description"))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/confirm";
+    return NextResponse.redirect(url);
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const csp = contentSecurityPolicy(nonce);
 

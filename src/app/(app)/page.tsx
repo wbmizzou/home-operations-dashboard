@@ -5,7 +5,8 @@ import ThemeToggle from "@/components/ThemeToggle";
 import RecurringStrip from "@/components/RecurringStrip";
 import { requireHousehold } from "@/lib/household";
 import { currentSeason, type Project } from "@/lib/constants";
-import { Acorn, Footer, HeroScene } from "@/components/Whimsy";
+import { Footer, HeroScene } from "@/components/Whimsy";
+import { isoDate, nowMs } from "@/lib/dates";
 import { PipelineBar, ProgressRing, RankedBars, SeasonHeatmap, SpendChart, priorityRows, type SpendEvent } from "@/components/charts";
 
 export const dynamic = "force-dynamic";
@@ -76,10 +77,10 @@ export default async function Dashboard() {
   const season = currentSeason();
   const thisSeason = open.filter((p) => p.seasons.includes(season)).sort((a, b) => a.priority - b.priority).slice(0, 6);
   const p1 = open.filter((p) => p.priority === 1);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = isoDate();
   const lastService = new Map<string, string>();
   for (const l of serviceLogs) if (!lastService.get(l.project_id) || l.performed_on > lastService.get(l.project_id)!) lastService.set(l.project_id, l.performed_on);
-  const soon = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10);
+  const soon = isoDate(60);
   const dated: Project[] = open.map((p) => {
     if ((p.recurrence_months || p.recurrence) && lastService.has(p.id)) return { ...p, target_date: nextDueDate(lastService.get(p.id)!, p.recurrence_months, p.target_date, null, p.recurrence) };
     return p;
@@ -90,7 +91,7 @@ export default async function Dashboard() {
   // Recurring upkeep: next due = last service + interval (before the first service: the target
   // date, or the day it was added). The strip shows everything due within 30 days, soonest first;
   // if nothing is that close, just the next one up.
-  const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const in30 = isoDate(30);
   const recurringAll = open.filter(isRecurring).map((p) => {
     const last = lastService.get(p.id) ?? null;
     return { p, logged: !!last, due: nextDueDate(last, p.recurrence_months, p.target_date, (p as Project & { created_at: string }).created_at, p.recurrence) };
@@ -119,7 +120,7 @@ export default async function Dashboard() {
       )}
 
       <div className="mt-6 space-y-4">
-        <SpendChart events={events} total={spent} completed={completed.length} />
+        <SpendChart now={nowMs()} events={events} total={spent} completed={completed.length} />
         <div className="grid gap-4 lg:grid-cols-2">
           <ProgressRing done={completed.length} open={open.length} inMotion={inMotion} />
           <PipelineBar projects={projects} />

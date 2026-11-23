@@ -2,33 +2,38 @@
 import Link from "next/link";
 import InstallHint from "@/components/InstallHint";
 import { Cottage } from "@/components/Whimsy";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
+import { INVITE_KEY, inviteCodeFrom } from "@/lib/inviteCode";
+
+const CONFIRM_MESSAGES: Record<string, string> = {
+  done: "Your email is confirmed ✓ Log in to continue.",
+  expired: "That confirmation link has expired or was already used. Log in, or sign up again for a new link.",
+};
 
 export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
+  const params = useSearchParams();
+  // Invite links look like /signup?code=ABCD-1234-EFGH. Keep the code until the welcome step.
+  const inviteCode = inviteCodeFrom(params.get("code"));
+  const confirmMessage = CONFIRM_MESSAGES[params.get("confirm") ?? ""] ?? null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [mfaFactor, setMfaFactor] = useState<string | null>(null); // set when a 6-digit code is still needed
   const [otp, setOtp] = useState("");
 
-  // Invite links look like /signup?code=ABCD1234. Keep the code until the welcome step.
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("code");
-    if (!code) return;
-    setInviteCode(code.toUpperCase());
-    try { localStorage.setItem("hh-invite-code", code.toUpperCase()); } catch {}
-  }, []);
+    if (inviteCode) try { localStorage.setItem(INVITE_KEY, inviteCode); } catch {}
+  }, [inviteCode]);
 
   // Signed in with a password but two-step sign-in is on (the proxy sends people here with ?mfa=1).
   useEffect(() => {
-    if (mode === "login" && new URLSearchParams(window.location.search).get("mfa") === "1") needsCode();
+    if (mode === "login" && params.get("mfa") === "1") needsCode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -68,7 +73,11 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       if (error) setError(friendlyError(error));
       else if (!(await needsCode())) { router.replace("/"); router.refresh(); }
     } else {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email, password,
+        // The confirmation email links back here to finish signing in (see app/auth/confirm).
+        options: { emailRedirectTo: `${window.location.origin}/auth/confirm` },
+      });
       if (error) setError(friendlyError(error));
       else if (data.session) { router.replace("/welcome"); router.refresh(); }
       else setInfo("Check your email to confirm your account, then log in.");
@@ -96,6 +105,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       ) : (
       <form onSubmit={submit} className="card space-y-3 p-5">
         <h2 className="text-xl">{mode === "login" ? "Welcome home 🍂" : "Create your account 🌱"}</h2>
+        {confirmMessage && <p className="rounded-xl bg-moss/10 p-2 text-sm text-moss">{confirmMessage}</p>}
         {inviteCode && <p className="rounded-xl bg-moss/10 p-2 text-sm text-moss">🔑 You&apos;ve been invited to a household (code {inviteCode}). {mode === "login" ? "Log in" : "Sign up"} and you&apos;ll join it next.</p>}
         <input className="input" type="email" required placeholder="Email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className="input" type="password" required minLength={8} placeholder="Password (8+ characters)"

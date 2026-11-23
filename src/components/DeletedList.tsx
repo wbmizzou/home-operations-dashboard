@@ -6,9 +6,7 @@ import { restoreProject } from "@/lib/projectActions";
 import { toast } from "@/lib/toast";
 import { friendlyError } from "@/lib/errors";
 
-const DAY = 864e5;
-
-export default function DeletedList({ items, canDeleteForever }: { items: { id: string; title: string; deleted_at: string }[]; canDeleteForever: boolean }) {
+export default function DeletedList({ items, canDeleteForever }: { items: { id: string; title: string; deleted_at: string; days_left: number }[]; canDeleteForever: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -27,7 +25,7 @@ export default function DeletedList({ items, canDeleteForever }: { items: { id: 
   return (
     <ul className="card mt-5 divide-y divide-line overflow-hidden">
       {items.map((p) => {
-        const left = Math.max(0, 30 - Math.floor((Date.now() - new Date(p.deleted_at).getTime()) / DAY));
+        const left = p.days_left;
         return (
           <li key={p.id} className="flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
