@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireHousehold } from "@/lib/household";
 import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import { STATUS_SORT_ORDER, money, type Project } from "@/lib/constants";
+import { priorityLabel } from "@/lib/priorities";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   const includeCompleted = sp.open === "0" || status.includes("Complete");
   if (!includeCompleted) query = query.neq("status", "Complete");
 
-  const priorities = list(sp.priority).map(Number).filter((n) => n >= 1 && n <= 5);
+  const priorities = list(sp.priority).map(Number).filter((n) => hh.priorities.some((l) => l.value === n));
   if (priorities.length) query = query.in("priority", priorities);
 
   const cats = list(sp.category);
@@ -135,7 +136,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
         {filtered && <ClearAllLink />}
       </header>
       <div className="mt-4"><Suspense><SearchBox /></Suspense></div>
-      <Suspense><FilterBar categories={categories ?? []} me={myName} owners={hh.owners} /></Suspense>
+      <Suspense><FilterBar categories={categories ?? []} me={myName} owners={hh.owners} priorities={hh.priorities} /></Suspense>
 
       <ul className="card mt-5 divide-y divide-line overflow-hidden">
         {projects.map((p, i) => {
@@ -151,7 +152,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
               )}
               <ProjectListItem p={{
                 id: p.id, title: p.title, categoryName: p.categories?.name ?? null, status: p.status, completedOn: p.completed_on,
-                owner: p.owner, priority: p.priority, due,
+                owner: p.owner, priority: p.priority, priorityLabel: priorityLabel(hh.priorities, p.priority), due,
                 // The due tag already shows the date; otherwise show a friendly date or the note.
                 when: due ? null : p.target_date ? new Date(p.target_date + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: p.target_date.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric" }) : p.target_note,
                 cost: cost != null ? Number(cost) : null,

@@ -6,17 +6,20 @@ import { softDeleteProject } from "@/lib/projectActions";
 import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
 import { approxMonths, ruleFromMonths, type Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
-import { DIY_HIRE, PRIORITIES, SEASONS, STATUSES, type Project } from "@/lib/constants";
+import { DIY_HIRE, SEASONS, STATUSES, type Project } from "@/lib/constants";
+import { priorityName, type PriorityLevel } from "@/lib/priorities";
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? null : Number(v));
 const str = (v: FormDataEntryValue | null) => (v === null || String(v).trim() === "" ? null : String(v).trim());
 const NEW_CATEGORY = "__new__";
+const NEW_PRIORITY = "__new_priority__";
 const today = () => new Date().toISOString().slice(0, 10);
 
 type Props = {
   formId?: string;
   hideSubmit?: boolean;
   owners: string[];
+  priorities: PriorityLevel[];
   defaultOwner?: string | null;
   /** Anchor for converting an old "every N months" setting into a pattern (last service, or when it was added). */
   seedDate?: string | null;
@@ -25,12 +28,15 @@ type Props = {
   initial?: Project;
 };
 
-export default function ProjectForm({ categories, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate }: Props) {
+export default function ProjectForm({ categories, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate, priorities }: Props) {
   const router = useRouter();
   const [seasons, setSeasons] = useState<string[]>(initial?.seasons ?? []);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [catChoice, setCatChoice] = useState(initial?.category_id ?? "");
+  // Priority comes from the household's own levels; "New priority level…" adds one, like categories.
+  const defaultPriority = initial?.priority ?? (priorities.find((p) => p.value === 3) ?? priorities[Math.floor(priorities.length / 2)])?.value ?? 1;
+  const [prioChoice, setPrioChoice] = useState(String(defaultPriority));
   // Repeat pattern: existing tasks with only "every N months" start from an equivalent pattern.
   const initialRule = initial?.recurrence ?? (initial?.recurrence_months ? ruleFromMonths(initial.recurrence_months, seedDate ?? initial.target_date ?? new Date().toISOString().slice(0, 10)) : null);
   const [repeats, setRepeats] = useState(!!initialRule);
@@ -81,6 +87,18 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       category_id = catChoice;
     }
 
+    // A brand-new priority level is added after the household's last one.
+    let priority = Number(prioChoice);
+    if (prioChoice === NEW_PRIORITY) {
+      const label = str(f.get("new_priority_label"));
+      if (!label) { setError("Name the new priority level (e.g. P6), or pick one from the list."); setBusy(false); return; }
+      const next = Math.max(0, ...priorities.map((p) => p.value)) + 1;
+      if (next > 20) { setError("You can have up to 20 priority levels."); setBusy(false); return; }
+      const { error } = await supabase.from("priority_levels").insert({ level: next, label, focus: str(f.get("new_priority_focus")) });
+      if (error) { setError(error.message); setBusy(false); return; }
+      priority = next;
+    }
+
     const status = String(f.get("status"));
     let completed_on = str(f.get("completed_on"));
     // Finished projects always carry a completion date (feeds the resale-value chart).
@@ -90,7 +108,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     const values = {
       title: str(f.get("title")),
       category_id,
-      priority: Number(f.get("priority")),
+      priority,
       seasons,
       diy_hire: str(f.get("diy_hire")),
       owner: str(f.get("owner")),
@@ -116,7 +134,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     if (another) {
       // Fresh blank form for the next one.
       toast(`Saved “${values.title}” ✓ — ready for the next one`);
-      setSeasons([]); setCatChoice(""); setRepeats(false); setRule(defaultRule()); setFormKey((k) => k + 1); setBusy(false);
+      setSeasons([]); setCatChoice(""); setPrioChoice(String(priority)); setRepeats(false); setRule(defaultRule()); setFormKey((k) => k + 1); setBusy(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
       router.refresh();
       return;
@@ -175,8 +193,21 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
         </div>
         <label className="block"><Label>Status</Label>
           <select name="status" className="input" defaultValue={initial?.status ?? "Not Started"}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select></label>
-        <label className="block"><Label>Priority</Label>
-          <select name="priority" className="input" defaultValue={initial?.priority ?? 3}>{PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label} · {p.focus}</option>)}</select></label>
+        <div>
+          <label className="block"><Label>Priority</Label>
+            <select className="input" value={prioChoice} onChange={(e) => { markDirty(); setPrioChoice(e.target.value); }}>
+              {priorities.map((p) => <option key={p.value} value={p.value}>{priorityName(p)}</option>)}
+              {initial && !priorities.some((p) => p.value === initial.priority) && <option value={initial.priority}>P{initial.priority}</option>}
+              <option value={NEW_PRIORITY}>＋ New priority level…</option>
+            </select>
+          </label>
+          {prioChoice === NEW_PRIORITY && (
+            <div className="mt-2 grid grid-cols-[6rem_1fr] gap-2">
+              <input name="new_priority_label" className="input" placeholder={`P${Math.max(0, ...priorities.map((p) => p.value)) + 1}`} maxLength={20} autoFocus aria-label="New priority name" />
+              <input name="new_priority_focus" className="input" placeholder="What it means (optional)" maxLength={60} aria-label="New priority description" />
+            </div>
+          )}
+        </div>
         <label className="block"><Label>Owner</Label>
           <select name="owner" className="input" defaultValue={initial ? (initial.owner ?? "") : (defaultOwner ?? "")}><option value="">Unassigned</option>{[...new Set([...owners, ...(initial?.owner ? [initial.owner] : [])])].map((o) => <option key={o}>{o}</option>)}</select></label>
         <label className="block"><Label>DIY / Hire</Label>

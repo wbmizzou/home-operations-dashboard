@@ -1,7 +1,8 @@
 "use client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { PRIORITIES, STATUSES } from "@/lib/constants";
+import { STATUSES } from "@/lib/constants";
+import { priorityName, type PriorityLevel } from "@/lib/priorities";
 
 export const SORTS = [
   { value: "status", label: "Status" },
@@ -32,7 +33,7 @@ export function ClearAllLink() {
 
 type Group = { key: string; title: string; options: { value: string; label: string }[] };
 
-export default function FilterBar({ categories, me, owners }: { categories: { id: string; name: string }[]; me: string | null; owners: string[] }) {
+export default function FilterBar({ categories, me, owners, priorities }: { categories: { id: string; name: string }[]; me: string | null; owners: string[]; priorities: PriorityLevel[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -50,7 +51,7 @@ export default function FilterBar({ categories, me, owners }: { categories: { id
   }, [params, pathname, router]);
 
   const groups: Group[] = [
-    { key: "priority", title: "Priority", options: PRIORITIES.map((p) => ({ value: String(p.value), label: `${p.label} · ${p.focus}` })) },
+    { key: "priority", title: "Priority", options: priorities.map((p) => ({ value: String(p.value), label: priorityName(p) })) },
     { key: "category", title: "Category", options: [...categories.map((c) => ({ value: c.id, label: c.name })), { value: "none", label: "Uncategorized" }] },
     { key: "owner", title: "Owner", options: [...owners.map((o) => ({ value: o, label: o })), { value: "none", label: "Unassigned" }] },
     { key: "season", title: "Season", options: SEASONS.map((s) => ({ value: s, label: s })) },

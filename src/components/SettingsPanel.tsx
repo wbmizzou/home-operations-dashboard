@@ -10,7 +10,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   return <section className="card space-y-3 p-5"><h2 className="text-lg">{title}</h2>{children}</section>;
 }
 
-export default function SettingsPanel({ household, members, myUserId, email }: { household: Household; members: Member[]; myUserId: string; email: string }) {
+export default function SettingsPanel({ household, members, myUserId, email, children }: { household: Household; members: Member[]; myUserId: string; email: string; children?: React.ReactNode }) {
   const router = useRouter();
   const me = members.find((m) => m.user_id === myUserId);
   const [homeName, setHomeName] = useState(household.name);
@@ -84,6 +84,8 @@ export default function SettingsPanel({ household, members, myUserId, email }: {
         </div>
         <button type="button" onClick={newCode} className="text-sm text-muted underline">Make a new code (stops the old one)</button>
       </Card>
+
+      {children}
 
       <Card title="👤 You">
         <form onSubmit={saveMe} className="flex gap-2">

@@ -75,7 +75,7 @@ export default async function Dashboard() {
 
   const season = currentSeason();
   const thisSeason = open.filter((p) => p.seasons.includes(season)).sort((a, b) => a.priority - b.priority).slice(0, 6);
-  const p1 = open.filter((p) => p.priority === 1);
+  const p1 = open.filter((p) => p.priority === (hh.priorities[0]?.value ?? 1));
   const today = new Date().toISOString().slice(0, 10);
   const lastService = new Map<string, string>();
   for (const l of serviceLogs) if (!lastService.get(l.project_id) || l.performed_on > lastService.get(l.project_id)!) lastService.set(l.project_id, l.performed_on);
@@ -125,10 +125,10 @@ export default async function Dashboard() {
           <PipelineBar projects={projects} />
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
-          <RankedBars title="Open by priority" hint="Tap a bar to see the projects" rows={priorityRows(open)} />
+          <RankedBars title="Open by priority" hint="Tap a bar to see the projects" rows={priorityRows(open, hh.priorities)} />
           <RankedBars title="Open by category" hint="Longest bar = most open projects" rows={byCategory} />
         </div>
-        <SeasonHeatmap open={open} />
+        <SeasonHeatmap open={open} levels={hh.priorities} />
       </div>
 
       <div className="grid gap-0 lg:grid-cols-2 lg:gap-6">
@@ -137,7 +137,7 @@ export default async function Dashboard() {
             {thisSeason.length ? thisSeason.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing tagged for {season}.</li>}
           </ul>
         </Section>
-        <Section title="🛡️ Protect the house" hint={`${p1.length} open`}>
+        <Section title={`🛡️ ${hh.priorities[0]?.focus ?? hh.priorities[0]?.label ?? "Top priority"}`} hint={`${p1.length} open`}>
           <ul className="card divide-y divide-line">
             {p1.length ? p1.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">All snug — nothing urgent in the burrow. 🌿</li>}
           </ul>
