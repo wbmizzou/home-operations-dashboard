@@ -16,6 +16,7 @@ Anyone can sign up and start their own household. Row-level security limits ever
 
 ## Supabase settings (dashboard, not in code)
 - Authentication → Sign In / Providers → Email: **Confirm email** on, **minimum password length 8+**, **Prevent use of leaked passwords** on.
+- Authentication → URL Configuration → Redirect URLs: add `https://<your-site>/auth/confirm` (where the sign-up confirmation email lands). Without it, links fall back to the Site URL, which the app also handles.
 - Authentication → Multi-Factor: **TOTP** enabled (on by default).
 - Authentication → Attack Protection: consider CAPTCHA (Turnstile/hCaptcha) if spam sign-ups appear.
 

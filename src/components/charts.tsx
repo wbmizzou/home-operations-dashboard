@@ -145,7 +145,7 @@ export function SeasonHeatmap({ open }: { open: Project[] }) {
 /* 5 · Resale value: running total of money invested over time */
 export type SpendEvent = { date: string; amount: number; label: string };
 
-export function SpendChart({ events, total, completed }: { events: SpendEvent[]; total: number; completed: number }) {
+export function SpendChart({ events, total, completed, now }: { events: SpendEvent[]; total: number; completed: number; now: number }) {
   const sorted = [...events].filter((e) => e.amount > 0).sort((a, b) => a.date.localeCompare(b.date));
   const W = 360, H = 150, L = 38, Rm = 12, T = 14, B = 24;
   let body: React.ReactNode;
@@ -157,8 +157,12 @@ export function SpendChart({ events, total, completed }: { events: SpendEvent[];
     );
   } else {
     let run = 0;
-    const pts = sorted.map((e) => ({ t: new Date(e.date + "T00:00").getTime(), v: (run += e.amount), label: e.label, date: e.date }));
-    const t0 = pts[0].t - 14 * 864e5, t1 = Math.max(Date.now(), pts[pts.length - 1].t) + 7 * 864e5;
+    const pts: { t: number; v: number; label: string; date: string }[] = [];
+    for (const e of sorted) {
+      run += e.amount;
+      pts.push({ t: new Date(e.date + "T00:00").getTime(), v: run, label: e.label, date: e.date });
+    }
+    const t0 = pts[0].t - 14 * 864e5, t1 = Math.max(now, pts[pts.length - 1].t) + 7 * 864e5;
     const top = niceMax(run);
     const x = (t: number) => L + ((t - t0) / (t1 - t0)) * (W - L - Rm);
     const y = (v: number) => T + (1 - v / top) * (H - T - B);

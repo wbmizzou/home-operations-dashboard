@@ -1,6 +1,7 @@
 import { requireHousehold } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
 import SettingsPanel, { type Activity } from "@/components/SettingsPanel";
+import { nowMs } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,8 @@ export default async function Settings() {
     <>
       <h1 className="text-3xl text-moss">⚙️ Settings</h1>
       <SettingsPanel household={hh.household} members={hh.members} myUserId={user?.id ?? ""} isOwner={hh.isOwner}
-        email={user?.email ?? ""} activity={(activity ?? []) as Activity[]} />
+        email={user?.email ?? ""} activity={(activity ?? []) as Activity[]}
+        inviteExpired={new Date(hh.household.invite_expires_at).getTime() <= nowMs()} />
     </>
   );
 }

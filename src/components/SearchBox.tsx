@@ -1,6 +1,6 @@
 "use client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 /** Live search: updates ?q= (keeping other filters) after a short pause in typing. */
 export default function SearchBox() {
@@ -11,7 +11,9 @@ export default function SearchBox() {
   const [value, setValue] = useState(current);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => setValue(current), [current]);
+  // When the URL changes (back/forward, Clear filters), show its search term.
+  const [shown, setShown] = useState(current);
+  if (shown !== current) { setShown(current); setValue(current); }
 
   function push(next: string) {
     const sp = new URLSearchParams(params.toString());

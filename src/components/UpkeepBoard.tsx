@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { money } from "@/lib/constants";
 import { prettyDate, type DueState } from "@/lib/recurrence";
 import { toast } from "@/lib/toast";
+import { useLocalStorage } from "@/lib/useBrowserValue";
 import QuickLogSheet, { type LogTarget } from "@/components/QuickLogSheet";
 import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
 import { approxMonths, parseYmd, ruleFromMonths, type Recurrence } from "@/lib/rrule";
@@ -45,11 +46,11 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
   const [starterOpen, setStarterOpen] = useState(tasks.length < 3);
   // "Don't show this" hides the starter checklist on this device; a link at the bottom brings it back.
   const STARTER_KEY = "hh-starter-dismissed";
-  const [starterDismissed, setStarterDismissed] = useState(true); // hidden until we've checked, so it never flashes
-  useEffect(() => { try { setStarterDismissed(localStorage.getItem(STARTER_KEY) === "1"); } catch { setStarterDismissed(false); } }, []);
+  // Hidden on the server and until hydration, so it never flashes.
+  const [dismissed, storeDismissed] = useLocalStorage(STARTER_KEY, "1");
+  const starterDismissed = dismissed === "1";
   function dismissStarter(hide: boolean) {
-    try { if (hide) localStorage.setItem(STARTER_KEY, "1"); else localStorage.removeItem(STARTER_KEY); } catch {}
-    setStarterDismissed(hide);
+    storeDismissed(hide ? "1" : null);
     if (hide) toast("Starter checklist hidden", { label: "Undo", run: () => dismissStarter(false) });
     else setStarterOpen(true);
   }
