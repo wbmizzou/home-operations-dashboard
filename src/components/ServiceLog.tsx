@@ -6,6 +6,7 @@ import { money } from "@/lib/constants";
 import { nextDueDate } from "@/lib/recurrence";
 import { describe, type Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
+import { friendlyError } from "@/lib/errors";
 
 export type Log = { id: string; performed_on: string; cost: number | null; notes: string | null };
 
@@ -29,7 +30,7 @@ export default function ServiceLog({ projectId, months, logs, target, rule }: { 
   // saved straight away without logging anything.
   async function reschedule(d: string) {
     const { error } = await createClient().from("projects").update({ target_date: d }).eq("id", projectId);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(friendlyError(error)); return; }
     // Keep the project form below in step, so a later "Save changes" doesn't undo this.
     const field = (document.getElementById("project-form") as HTMLFormElement | null)?.elements.namedItem("target_date") as HTMLInputElement | null;
     if (field) field.value = d;
@@ -47,7 +48,7 @@ export default function ServiceLog({ projectId, months, logs, target, rule }: { 
     const { error } = await supabase.from("service_logs").insert({
       project_id: projectId, performed_on: date, cost: cost === "" ? null : Number(cost), notes: notes.trim() || null,
     });
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(friendlyError(error)); setBusy(false); return; }
     // A logged service puts the task back on its regular schedule.
     await supabase.from("projects").update({ target_date: null }).eq("id", projectId);
     const field = (document.getElementById("project-form") as HTMLFormElement | null)?.elements.namedItem("target_date") as HTMLInputElement | null;
@@ -60,7 +61,7 @@ export default function ServiceLog({ projectId, months, logs, target, rule }: { 
   async function remove(id: string) {
     if (!confirm("Remove this service entry?")) return;
     const { error } = await createClient().from("service_logs").delete().eq("id", id);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(friendlyError(error)); return; }
     router.refresh();
   }
 

@@ -3,10 +3,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
+import { friendlyError } from "@/lib/errors";
 import type { PriorityLevel } from "@/lib/priorities";
 
 /** Settings card: rename, describe, add and remove the household's priority levels. */
-export default function PriorityEditor({ levels }: { levels: PriorityLevel[] }) {
+export default function PriorityEditor({ levels, isOwner }: { levels: PriorityLevel[]; isOwner: boolean }) {
   const router = useRouter();
   const [rows, setRows] = useState(levels.map((l) => ({ ...l, focus: l.focus ?? "" })));
   const [busy, setBusy] = useState(false);
@@ -21,7 +22,7 @@ export default function PriorityEditor({ levels }: { levels: PriorityLevel[] }) 
       { onConflict: "household_id,level" },
     );
     setBusy(false);
-    if (error) return toast(`Couldn't save: ${error.message}`);
+    if (error) return toast(`Couldn't save: ${friendlyError(error)}`);
     toast("Priority levels saved ✓"); router.refresh();
   }
 
@@ -37,7 +38,7 @@ export default function PriorityEditor({ levels }: { levels: PriorityLevel[] }) 
     if (!levels.some((l) => l.value === level)) { setRows(rows.filter((r) => r.value !== level)); return; } // never saved
     if (!window.confirm("Remove this priority level?")) return;
     const { error } = await supabase.from("priority_levels").delete().eq("level", level);
-    if (error) return toast(`Couldn't remove: ${error.message}`);
+    if (error) return toast(`Couldn't remove: ${friendlyError(error)}`);
     setRows(rows.filter((r) => r.value !== level));
     toast("Priority level removed ✓"); router.refresh();
   }
@@ -45,15 +46,15 @@ export default function PriorityEditor({ levels }: { levels: PriorityLevel[] }) 
   return (
     <section className="card space-y-3 p-5">
       <h2 className="text-lg">🎯 Priority levels</h2>
-      <p className="text-sm text-muted">Name your levels however your household thinks about work. The first one is treated as most urgent.</p>
+      <p className="text-sm text-muted">Name your levels however your household thinks about work. The first one is treated as most urgent.{!isOwner && " Only the household owner can remove a level."}</p>
       <ul className="space-y-2">
         {rows.map((r, i) => (
-          <li key={r.value} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2">
+          <li key={r.value} className={`grid items-center gap-2 ${isOwner ? "grid-cols-[5.5rem_1fr_auto]" : "grid-cols-[5.5rem_1fr]"}`}>
             <input className="input" value={r.label} maxLength={20} aria-label={`Level ${i + 1} name`}
               onChange={(e) => setRows(rows.map((x) => (x.value === r.value ? { ...x, label: e.target.value } : x)))} />
             <input className="input" value={r.focus} maxLength={60} placeholder="What it means (optional)" aria-label={`Level ${i + 1} description`}
               onChange={(e) => setRows(rows.map((x) => (x.value === r.value ? { ...x, focus: e.target.value } : x)))} />
-            <button type="button" onClick={() => remove(r.value)} aria-label={`Remove ${r.label}`} className="px-1 text-sm text-muted hover:text-berry">✕</button>
+            {isOwner && <button type="button" onClick={() => remove(r.value)} aria-label={`Remove ${r.label}`} className="px-1 text-sm text-muted hover:text-berry">✕</button>}
           </li>
         ))}
       </ul>

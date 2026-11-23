@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import RegisterSW from "@/components/RegisterSW";
 
@@ -20,12 +21,15 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Per-request nonce from the proxy's Content-Security-Policy (reading headers also makes every page
+  // dynamically rendered, which the nonce needs).
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Apply a saved Light/Dark choice before first paint, so there's no flash. */}
-        <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('hh-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}" }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('hh-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}" }} />
       </head>
       <body className="min-h-dvh antialiased">{children}<RegisterSW /></body>
     </html>

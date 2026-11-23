@@ -1,14 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { money } from "@/lib/constants";
 import { prettyDate, type DueState } from "@/lib/recurrence";
 import { toast } from "@/lib/toast";
+import { useLocalStorage } from "@/lib/useBrowserValue";
 import QuickLogSheet, { type LogTarget } from "@/components/QuickLogSheet";
 import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
 import { approxMonths, parseYmd, ruleFromMonths, type Recurrence } from "@/lib/rrule";
+import { friendlyError } from "@/lib/errors";
 
 export type UpkeepTask = { id: string; title: string; months: number | null; rule: Recurrence | null; schedule: string; category: string | null; last: string | null; due: string | null; state: DueState };
 export type HistoryEntry = { id: string; projectId: string; title: string; date: string; cost: number | null; notes: string | null };
@@ -44,11 +46,11 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
   const [starterOpen, setStarterOpen] = useState(tasks.length < 3);
   // "Don't show this" hides the starter checklist on this device; a link at the bottom brings it back.
   const STARTER_KEY = "hh-starter-dismissed";
-  const [starterDismissed, setStarterDismissed] = useState(true); // hidden until we've checked, so it never flashes
-  useEffect(() => { try { setStarterDismissed(localStorage.getItem(STARTER_KEY) === "1"); } catch { setStarterDismissed(false); } }, []);
+  // Hidden on the server and until hydration, so it never flashes.
+  const [dismissed, storeDismissed] = useLocalStorage(STARTER_KEY, "1");
+  const starterDismissed = dismissed === "1";
   function dismissStarter(hide: boolean) {
-    try { if (hide) localStorage.setItem(STARTER_KEY, "1"); else localStorage.removeItem(STARTER_KEY); } catch {}
-    setStarterDismissed(hide);
+    storeDismissed(hide ? "1" : null);
     if (hide) toast("Starter checklist hidden", { label: "Undo", run: () => dismissStarter(false) });
     else setStarterOpen(true);
   }
@@ -65,7 +67,7 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
     }));
     const { error } = await createClient().from("projects").insert(rows);
     setBusy(false);
-    if (error) return toast(`Couldn't add: ${error.message}`);
+    if (error) return toast(`Couldn't add: ${friendlyError(error)}`);
     toast(`Added ${rows.length} upkeep task${rows.length === 1 ? "" : "s"} ✓ — log when each was last done`);
     setPicked([]); router.refresh();
   }
@@ -209,7 +211,7 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
     const { data, error } = await supabase.from("projects").insert({
       title: title.trim(), status: "Recurring", recurrence: rule, recurrence_months: approxMonths(rule), priority: 2, owner: defaultOwner, seasons: [], category_id: category || null,
     }).select("id").single();
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(friendlyError(error)); setBusy(false); return; }
     if (last) {
       const { error: logError } = await supabase.from("service_logs").insert({ project_id: data.id, performed_on: last, cost: cost === "" ? null : Number(cost) });
       if (logError) { setError(logError.message); setBusy(false); return; }

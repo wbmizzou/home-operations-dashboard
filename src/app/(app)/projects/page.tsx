@@ -6,6 +6,7 @@ import SearchBox from "@/components/SearchBox";
 import { createClient } from "@/lib/supabase/server";
 import { requireHousehold } from "@/lib/household";
 import { isRecurring, nextDueDate } from "@/lib/recurrence";
+import { isoDate } from "@/lib/dates";
 import { STATUS_SORT_ORDER, money, type Project } from "@/lib/constants";
 import { priorityLabel } from "@/lib/priorities";
 
@@ -49,7 +50,9 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   const owners = list(sp.owner).filter((o) => o === "none" || hh.owners.includes(o));
   if (owners.length) {
     const named = owners.filter((o) => o !== "none");
-    const parts = [named.length ? `owner.in.(${named.join(",")})` : "", owners.includes("none") ? "owner.is.null" : ""].filter(Boolean);
+    // Owner names are free text (display names), so quote each one for PostgREST's filter syntax.
+    const quoted = named.map((o) => `"${o.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`);
+    const parts = [named.length ? `owner.in.(${quoted.join(",")})` : "", owners.includes("none") ? "owner.is.null" : ""].filter(Boolean);
     query = query.or(parts.join(","));
   }
 
@@ -102,8 +105,8 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   for (const l of logs ?? []) if (!lastService.get(l.project_id) || l.performed_on > lastService.get(l.project_id)!) lastService.set(l.project_id, l.performed_on);
   const openBlocker = new Map((blockers ?? []).filter((b) => b.status !== "Complete" && !b.deleted_at).map((b) => [b.id, b.title]));
 
-  const today = new Date().toISOString().slice(0, 10);
-  const soon = new Date(Date.now() + DUE_SOON_DAYS * 864e5).toISOString().slice(0, 10);
+  const today = isoDate();
+  const soon = isoDate(DUE_SOON_DAYS);
   const dueFor = (p: Project): ListProject["due"] => {
     if (p.status === "Complete") return null;
     const date = isRecurring(p) ? nextDueDate(lastService.get(p.id) ?? null, p.recurrence_months, p.target_date, null, p.recurrence) : p.target_date;

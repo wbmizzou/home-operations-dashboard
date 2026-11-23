@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Type definitions should match the Node.js version the app runs on (22), not the newest Node.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Held back until the Next.js lint tooling supports them:
+      # typescript-eslint doesn't support TypeScript 7 yet, and eslint-config-next's
+      # plugins (import, jsx-a11y, react) only declare support up to ESLint 9.
+      - dependency-name: "typescript"
+        versions: [">=7"]
+      - dependency-name: "eslint"
+        versions: [">=10"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

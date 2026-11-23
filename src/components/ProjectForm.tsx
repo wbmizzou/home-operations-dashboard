@@ -7,6 +7,7 @@ import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
 import { approxMonths, ruleFromMonths, type Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
 import { DIY_HIRE, SEASONS, STATUSES, type Project } from "@/lib/constants";
+import { friendlyError } from "@/lib/errors";
 import { priorityName, type PriorityLevel } from "@/lib/priorities";
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? null : Number(v));
@@ -27,6 +28,10 @@ type Props = {
   projects: { id: string; title: string }[];
   initial?: Project;
 };
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
+}
 
 export default function ProjectForm({ categories, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate, priorities }: Props) {
   const router = useRouter();
@@ -80,7 +85,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       if (existing) category_id = existing.id;
       else {
         const { data, error } = await supabase.from("categories").insert({ name: catName }).select("id").single();
-        if (error) { setError(error.message); setBusy(false); return; }
+        if (error) { setError(friendlyError(error)); setBusy(false); return; }
         category_id = data.id;
       }
     } else if (catChoice) {
@@ -95,7 +100,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       const next = Math.max(0, ...priorities.map((p) => p.value)) + 1;
       if (next > 20) { setError("You can have up to 20 priority levels."); setBusy(false); return; }
       const { error } = await supabase.from("priority_levels").insert({ level: next, label, focus: str(f.get("new_priority_focus")) });
-      if (error) { setError(error.message); setBusy(false); return; }
+      if (error) { setError(friendlyError(error)); setBusy(false); return; }
       priority = next;
     }
 
@@ -129,7 +134,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     const { error } = editing
       ? await supabase.from("projects").update(values).eq("id", initial!.id)
       : await supabase.from("projects").insert(values);
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(friendlyError(error)); setBusy(false); return; }
     dirty.current = false;
     if (another) {
       // Fresh blank form for the next one.
@@ -154,7 +159,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       blocked_by: initial.blocked_by, recurrence_months: initial.recurrence_months, recurrence: initial.recurrence, completed_on: null,
     };
     const { data, error } = await createClient().from("projects").insert(copy).select("id").single();
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(friendlyError(error)); setBusy(false); return; }
     dirty.current = false;
     toast("Duplicated ✓ — you're editing the copy");
     router.push(`/projects/${data.id}`);
@@ -168,8 +173,6 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     if (err) { setError(err); setBusy(false); return; }
     router.push("/projects");
   }
-
-  const Label = ({ children }: { children: React.ReactNode }) => <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
 
   return (
     <form key={formKey} ref={formRef} id={formId} onSubmit={submit} onChange={markDirty} className="card mt-4 space-y-4 p-5">
