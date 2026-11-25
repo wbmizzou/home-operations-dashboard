@@ -5,6 +5,7 @@ import ProjectListItem, { type ListProject } from "@/components/ProjectListItem"
 import SearchBox from "@/components/SearchBox";
 import FolderShelf from "@/components/FolderShelf";
 import FolderIcon from "@/components/FolderIcon";
+import BulkSelect, { SelectButton } from "@/components/BulkSelect";
 import type { Folder } from "@/lib/folders";
 import { createClient } from "@/lib/supabase/server";
 import { requireHousehold } from "@/lib/household";
@@ -165,7 +166,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
     : [];
 
   return (
-    <>
+    <BulkSelect options={{ categories: categories ?? [], folders, priorities: hh.priorities, owners: hh.owners, visibleIds: projects.map((p) => p.id) }}>
       <header className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-3xl text-moss">Projects</h1>
@@ -177,7 +178,10 @@ export default async function Projects({ searchParams }: { searchParams: Promise
             {!includeCompleted && <> · <Link href={`/projects?${new URLSearchParams({ ...keep, open: "0" })}`} className="underline">include completed</Link></>}
           </p>
         </div>
-        {filtered && <ClearAllLink />}
+        <div className="flex shrink-0 items-center gap-3">
+          {filtered && <ClearAllLink />}
+          {projects.length > 0 && <SelectButton />}
+        </div>
       </header>
       <div className="mt-4"><Suspense><SearchBox /></Suspense></div>
       {showShelf && <FolderShelf folders={shelf} />}
@@ -220,6 +224,6 @@ export default async function Projects({ searchParams }: { searchParams: Promise
       <p className="mt-6 text-center text-sm">
         <Link href="/projects/deleted" className="text-muted underline">🗑️ Recently deleted{deletedCount ? ` (${deletedCount})` : ""}</Link>
       </p>
-    </>
+    </BulkSelect>
   );
 }

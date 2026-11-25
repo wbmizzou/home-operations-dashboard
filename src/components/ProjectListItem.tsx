@@ -8,6 +8,7 @@ import { priorityTone } from "@/lib/priorities";
 import { softDeleteProject } from "@/lib/projectActions";
 import { toast } from "@/lib/toast";
 import { friendlyError } from "@/lib/errors";
+import { useBulk } from "@/components/BulkSelect";
 
 export type ListProject = {
   id: string;
@@ -44,6 +45,7 @@ export default function ProjectListItem({ p }: { p: ListProject }) {
   const start = useRef<{ x: number; y: number; base: number } | null>(null);
   const moved = useRef(false);
   const rowRef = useRef<HTMLLIElement>(null);
+  const bulk = useBulk();
 
   // Tapping anywhere else closes an open row.
   useEffect(() => {
@@ -52,6 +54,28 @@ export default function ProjectListItem({ p }: { p: ListProject }) {
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, [offset]);
+
+  // Select mode: the whole row is a checkbox (no swipe, no opening the project).
+  if (bulk?.selecting) {
+    const on = bulk.selected.has(p.id);
+    return (
+      <li className={on ? "bg-moss/10" : "bg-surface"}>
+        <label className="flex cursor-pointer items-center gap-3 px-4 py-3">
+          <input type="checkbox" checked={on} onChange={() => bulk.toggle(p.id)} className="h-6 w-6 shrink-0 accent-[var(--moss)]" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium">{p.title}</span>
+            <span className="block truncate text-xs text-muted">
+              {p.folder ? `${p.folder.name} · ` : ""}{p.categoryName ?? "Uncategorized"} · {p.owner ?? "Unassigned"}
+            </span>
+          </span>
+          <span className="shrink-0 text-right">
+            <span className={`block text-sm font-semibold ${priorityTone(p.priority)}`}>{p.priorityLabel}</span>
+            <span className="block text-[11px] text-muted">{p.status}</span>
+          </span>
+        </label>
+      </li>
+    );
+  }
 
   function onPointerDown(e: React.PointerEvent) {
     start.current = { x: e.clientX, y: e.clientY, base: offset };
