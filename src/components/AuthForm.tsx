@@ -56,7 +56,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const { error } = await createClient().auth.mfa.challengeAndVerify({ factorId: mfaFactor, code: otp.replace(/\s/g, "") });
     setBusy(false);
     if (error) { setError(friendlyError(error)); return; }
-    router.replace("/"); router.refresh();
+    router.replace(params.get("next") === "/reset-password" ? "/reset-password" : "/"); router.refresh();
   }
 
   async function cancelCode() {
@@ -113,6 +113,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {error && <p className="text-sm text-berry">{error}</p>}
         {info && <p className="text-sm text-moss">{info}</p>}
         <button className="btn inline-flex w-full" disabled={busy}>{busy ? "…" : mode === "login" ? "Step inside" : "Sign up"}</button>
+        {mode === "login" && <Link href="/forgot" className="block text-center text-sm text-muted underline">Forgot password?</Link>}
       </form>
       )}
       <p className="mt-4 text-center text-sm text-muted">
