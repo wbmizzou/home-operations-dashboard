@@ -24,6 +24,8 @@ export type ListProject = {
   due: { kind: "overdue" | "soon"; date: string } | null;
   /** Title of an unfinished project this one is waiting on. */
   blockedBy: string | null;
+  /** The folder it is in, shown as a small colored tag. */
+  folder?: { name: string; color: string } | null;
 };
 
 const REVEAL = 96; // px of the red Delete button
@@ -111,6 +113,7 @@ export default function ProjectListItem({ p }: { p: ListProject }) {
           className="min-w-0 flex-1 py-3 pl-4">
           <div className="truncate font-medium">{p.title}</div>
           <div className="truncate text-xs text-muted">
+            {p.folder && <><span aria-hidden="true" className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-[-1px] ring-1 ring-[var(--bark)]/40" style={{ background: p.folder.color }} />{p.folder.name} · </>}
             {p.categoryName ?? "Uncategorized"} · {p.owner ?? "Unassigned"}{p.when ? ` · ${p.when}` : ""}
           </div>
           {(p.due || p.blockedBy) && (

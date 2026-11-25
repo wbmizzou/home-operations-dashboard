@@ -6,6 +6,7 @@ import { priorityName, type PriorityLevel } from "@/lib/priorities";
 
 export const SORTS = [
   { value: "status", label: "Status" },
+  { value: "folder", label: "Folder" },
   { value: "priority", label: "Priority" },
   { value: "target", label: "Target date" },
   { value: "newest", label: "Newest first" },
