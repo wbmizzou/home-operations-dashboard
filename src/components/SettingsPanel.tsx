@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useBrowserValue } from "@/lib/useBrowserValue";
@@ -138,6 +139,10 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
         </div>
       </Card>
 
+      <Card title="🔑 Password">
+        <p className="text-sm text-muted">Change the password you use to log in.</p>
+        <Link href="/reset-password" className="inline-flex rounded-full border-2 border-moss px-4 py-2 text-sm font-semibold text-moss">Change password</Link>
+      </Card>
       <MfaCard />
 
       <Card title="📜 Recent activity">

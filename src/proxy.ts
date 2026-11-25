@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAuthCode } from "@/lib/inviteCode";
 
 // Exact paths (or their sub-paths) that don't need a signed-in user.
-const PUBLIC_PATHS = ["/login", "/signup", "/auth/confirm", "/api/keepalive"];
-const AUTH_PAGES = ["/login", "/signup"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot", "/auth/confirm", "/api/keepalive"];
+const AUTH_PAGES = ["/login", "/signup", "/forgot"];
 const under = (path: string, p: string) => path === p || path.startsWith(`${p}/`);
 
 /** A strict, per-request Content-Security-Policy. Next.js adds the nonce to its own scripts. */
@@ -91,7 +91,8 @@ export async function proxy(request: NextRequest) {
     if (needsCode && !under(path, "/login") && !under(path, "/auth/signout") && !under(path, "/api/keepalive")) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
-      url.search = "?mfa=1";
+      // After the code, come back to setting a new password if that's where they were going.
+      url.search = under(path, "/reset-password") ? "?mfa=1&next=/reset-password" : "?mfa=1";
       return redirect(url);
     }
     if (isAuthPage && !needsCode) {
