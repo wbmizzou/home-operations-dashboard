@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import ProjectForm from "@/components/ProjectForm";
 import { requireHousehold } from "@/lib/household";
 import EditToolbar from "@/components/EditToolbar";
+import FolderIcon from "@/components/FolderIcon";
 import ServiceLog from "@/components/ServiceLog";
 import { isRecurring } from "@/lib/recurrence";
 import type { Project } from "@/lib/constants";
@@ -13,14 +14,16 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
   const hh = await requireHousehold();
-  const [{ data: project }, { data: cats }, { data: others }, { data: logs }] = await Promise.all([
+  const [{ data: project }, { data: cats }, { data: others }, { data: logs }, { data: folders }] = await Promise.all([
     supabase.from("projects").select("*, categories(name)").eq("id", id).is("deleted_at", null).maybeSingle(),
     supabase.from("categories").select("id, name").order("name"),
     supabase.from("projects").select("id, title").is("deleted_at", null).order("title"),
     supabase.from("service_logs").select("id, performed_on, cost, notes").eq("project_id", id).order("performed_on", { ascending: false }),
+    supabase.from("folders").select("id, name, color, goal").order("name"),
   ]);
   if (!project) notFound();
   const p = project as Project;
+  const inFolder = (folders ?? []).find((f) => f.id === p.folder_id);
 
   // Warn when this project is waiting on another one that isn't finished yet.
   const { data: blocker } = p.blocked_by && p.status !== "Complete"
@@ -29,7 +32,10 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
 
   return (
     <>
-      <Link href="/projects" className="text-sm text-muted">← All projects</Link>
+      <div className="flex flex-wrap gap-x-3 text-sm text-muted">
+        <Link href="/projects">← All projects</Link>
+        {inFolder && <Link href={`/projects/folders/${inFolder.id}`} className="inline-flex items-center gap-1.5"><FolderIcon color={inFolder.color} size={16} />{inFolder.name}</Link>}
+      </div>
       <h1 className="mt-1 text-3xl text-moss">{p.status === "Complete" ? "✅ " : ""}{p.title}</h1>
       <EditToolbar id={p.id} title={p.title} defaultCost={p.actual_cost ?? p.quoted_cost ?? p.estimated_cost}
         canComplete={p.status !== "Complete" && !isRecurring(p)} formId="project-form" />
@@ -39,7 +45,7 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
         </p>
       )}
       {isRecurring(p) && p.status !== "Complete" && <ServiceLog projectId={p.id} months={p.recurrence_months} logs={logs ?? []} target={p.target_date} rule={p.recurrence} />}
-      <ProjectForm formId="project-form" hideSubmit owners={hh.owners} priorities={hh.priorities} seedDate={logs?.[0]?.performed_on ?? (p as Project & { created_at?: string }).created_at?.slice(0, 10) ?? null} categories={cats ?? []} projects={others ?? []} initial={p} />
+      <ProjectForm formId="project-form" hideSubmit owners={hh.owners} priorities={hh.priorities} seedDate={logs?.[0]?.performed_on ?? (p as Project & { created_at?: string }).created_at?.slice(0, 10) ?? null} categories={cats ?? []} folders={folders ?? []} projects={others ?? []} initial={p} />
     </>
   );
 }

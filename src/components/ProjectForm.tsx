@@ -9,11 +9,14 @@ import { toast } from "@/lib/toast";
 import { DIY_HIRE, SEASONS, STATUSES, type Project } from "@/lib/constants";
 import { friendlyError } from "@/lib/errors";
 import { priorityName, type PriorityLevel } from "@/lib/priorities";
+import { FOLDER_COLORS, type Folder } from "@/lib/folders";
+import { ColorPicker } from "@/components/FolderEditor";
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? null : Number(v));
 const str = (v: FormDataEntryValue | null) => (v === null || String(v).trim() === "" ? null : String(v).trim());
 const NEW_CATEGORY = "__new__";
 const NEW_PRIORITY = "__new_priority__";
+const NEW_FOLDER = "__new_folder__";
 const today = () => new Date().toISOString().slice(0, 10);
 
 type Props = {
@@ -25,6 +28,9 @@ type Props = {
   /** Anchor for converting an old "every N months" setting into a pattern (last service, or when it was added). */
   seedDate?: string | null;
   categories: { id: string; name: string }[];
+  folders: Folder[];
+  /** Pre-selected folder for a new project (e.g. "Add a project to this folder"). */
+  defaultFolderId?: string | null;
   projects: { id: string; title: string }[];
   initial?: Project;
 };
@@ -33,12 +39,14 @@ function Label({ children }: { children: React.ReactNode }) {
   return <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
 }
 
-export default function ProjectForm({ categories, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate, priorities }: Props) {
+export default function ProjectForm({ categories, folders, defaultFolderId, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate, priorities }: Props) {
   const router = useRouter();
   const [seasons, setSeasons] = useState<string[]>(initial?.seasons ?? []);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [catChoice, setCatChoice] = useState(initial?.category_id ?? "");
+  const [folderChoice, setFolderChoice] = useState(initial ? (initial.folder_id ?? "") : (defaultFolderId ?? ""));
+  const [newFolderColor, setNewFolderColor] = useState<string>(FOLDER_COLORS[0]);
   // Priority comes from the household's own levels; "New priority level…" adds one, like categories.
   const defaultPriority = initial?.priority ?? (priorities.find((p) => p.value === 3) ?? priorities[Math.floor(priorities.length / 2)])?.value ?? 1;
   const [prioChoice, setPrioChoice] = useState(String(defaultPriority));
@@ -92,6 +100,20 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
       category_id = catChoice;
     }
 
+    // Folder: "New folder…" makes one with the chosen name and color (or reuses a matching name).
+    let folder_id: string | null = folderChoice && folderChoice !== NEW_FOLDER ? folderChoice : null;
+    if (folderChoice === NEW_FOLDER) {
+      const folderName = str(f.get("new_folder"));
+      if (!folderName) { setError("Name the new folder, or pick one from the list."); setBusy(false); return; }
+      const existing = folders.find((x) => x.name.toLowerCase() === folderName.toLowerCase());
+      if (existing) folder_id = existing.id;
+      else {
+        const { data, error } = await supabase.from("folders").insert({ name: folderName, color: newFolderColor }).select("id").single();
+        if (error) { setError(friendlyError(error)); setBusy(false); return; }
+        folder_id = data.id;
+      }
+    }
+
     // A brand-new priority level is added after the household's last one.
     let priority = Number(prioChoice);
     if (prioChoice === NEW_PRIORITY) {
@@ -113,6 +135,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     const values = {
       title: str(f.get("title")),
       category_id,
+      folder_id,
       priority,
       seasons,
       diy_hire: str(f.get("diy_hire")),
@@ -139,13 +162,13 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     if (another) {
       // Fresh blank form for the next one.
       toast(`Saved “${values.title}” ✓ — ready for the next one`);
-      setSeasons([]); setCatChoice(""); setPrioChoice(String(priority)); setRepeats(false); setRule(defaultRule()); setFormKey((k) => k + 1); setBusy(false);
+      setSeasons([]); setCatChoice(""); setFolderChoice(folder_id ?? ""); setPrioChoice(String(priority)); setRepeats(false); setRule(defaultRule()); setFormKey((k) => k + 1); setBusy(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
       router.refresh();
       return;
     }
     toast(editing ? "Saved ✓" : `Added “${values.title}” ✓`);
-    router.push(editing ? "/projects" : "/"); router.refresh();
+    router.push(editing ? "/projects" : defaultFolderId && folder_id === defaultFolderId ? `/projects/folders/${defaultFolderId}` : "/"); router.refresh();
   }
 
   async function duplicate() {
@@ -153,7 +176,7 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
     if (dirty.current && !window.confirm("Unsaved changes won't be copied. Duplicate the saved version?")) return;
     setBusy(true);
     const copy = {
-      title: `${initial.title} (copy)`, category_id: initial.category_id, priority: initial.priority, seasons: initial.seasons,
+      title: `${initial.title} (copy)`, category_id: initial.category_id, folder_id: initial.folder_id ?? null, priority: initial.priority, seasons: initial.seasons,
       diy_hire: initial.diy_hire, owner: initial.owner, status: "Not Started", target_date: null, target_note: initial.target_note,
       next_action: initial.next_action, notes: initial.notes, estimated_cost: initial.estimated_cost, quoted_cost: null, actual_cost: null,
       blocked_by: initial.blocked_by, recurrence_months: initial.recurrence_months, recurrence: initial.recurrence, completed_on: null,
@@ -192,6 +215,21 @@ export default function ProjectForm({ categories, projects, initial, formId, hid
           </label>
           {catChoice === NEW_CATEGORY && (
             <input name="new_category" className="input mt-2" placeholder="Name the new category" autoFocus />
+          )}
+        </div>
+        <div>
+          <label className="block"><Label>Folder</Label>
+            <select className="input" value={folderChoice} onChange={(e) => { markDirty(); setFolderChoice(e.target.value); }}>
+              <option value="">No folder</option>
+              {folders.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+              <option value={NEW_FOLDER}>＋ New folder…</option>
+            </select>
+          </label>
+          {folderChoice === NEW_FOLDER && (
+            <div className="mt-2 space-y-2">
+              <input name="new_folder" className="input" placeholder="Name the new folder" maxLength={40} autoFocus aria-label="New folder name" />
+              <ColorPicker value={newFolderColor} onChange={(c) => { markDirty(); setNewFolderColor(c); }} />
+            </div>
           )}
         </div>
         <label className="block"><Label>Status</Label>

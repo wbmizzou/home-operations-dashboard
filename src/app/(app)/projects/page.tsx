@@ -3,6 +3,9 @@ import { Fragment, Suspense } from "react";
 import FilterBar, { ClearAllLink } from "@/components/FilterBar";
 import ProjectListItem, { type ListProject } from "@/components/ProjectListItem";
 import SearchBox from "@/components/SearchBox";
+import FolderShelf from "@/components/FolderShelf";
+import FolderIcon from "@/components/FolderIcon";
+import type { Folder } from "@/lib/folders";
 import { createClient } from "@/lib/supabase/server";
 import { requireHousehold } from "@/lib/household";
 import { isRecurring, nextDueDate } from "@/lib/recurrence";
@@ -22,10 +25,14 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   const supabase = await createClient();
 
   const hh = await requireHousehold();
-  const [{ data: categories }, { count: deletedCount }] = await Promise.all([
+  const [{ data: categories }, { count: deletedCount }, { data: folderRows }, { data: filed }] = await Promise.all([
     supabase.from("categories").select("id, name").order("name"),
     supabase.from("projects").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
+    supabase.from("folders").select("id, name, color, goal").order("name"),
+    supabase.from("projects").select("folder_id, status").is("deleted_at", null).not("folder_id", "is", null),
   ]);
+  const folders = (folderRows ?? []) as Folder[];
+  const folderById = new Map(folders.map((f) => [f.id, f]));
   const myName = hh.me;
 
   let query = supabase.from("projects").select("*, categories(name)").is("deleted_at", null);
@@ -69,6 +76,8 @@ export default async function Projects({ searchParams }: { searchParams: Promise
     const matchCats = (categories ?? []).filter((c) => c.name.toLowerCase().includes(term.toLowerCase())).map((c) => c.id);
     const fields = ["title", "notes", "next_action", "target_note"].map((f) => `${f}.ilike."%${term}%"`);
     if (matchCats.length) fields.push(`category_id.in.(${matchCats.join(",")})`);
+    const matchFolders = folders.filter((f) => f.name.toLowerCase().includes(term.toLowerCase())).map((f) => f.id);
+    if (matchFolders.length) fields.push(`folder_id.in.(${matchFolders.join(",")})`);
     query = query.or(fields.join(","));
   }
 
@@ -85,8 +94,9 @@ export default async function Projects({ searchParams }: { searchParams: Promise
 
   // Default sort is by status (a custom order the database can't express), then priority, then name.
   const byStatus = !sp.sort || sp.sort === "status";
-  if (byStatus) {
-    const rank = (st: string) => { const i = STATUS_SORT_ORDER.indexOf(st as (typeof STATUS_SORT_ORDER)[number]); return i === -1 ? 99 : i; };
+  const byFolder = sp.sort === "folder";
+  const rank = (st: string) => { const i = STATUS_SORT_ORDER.indexOf(st as (typeof STATUS_SORT_ORDER)[number]); return i === -1 ? 99 : i; };
+  if (byStatus || byFolder) {
     projects = [...projects].sort((a, b) => rank(a.status) - rank(b.status) || a.priority - b.priority || a.title.localeCompare(b.title));
   }
 
@@ -123,6 +133,37 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   const filtered = !!(status.length || sp.open === "0" || priorities.length || cats.length || owners.length || seasons.length || term || mine);
   const keep = Object.fromEntries(Object.entries(sp).filter(([, v]) => v !== undefined)) as Record<string, string>;
 
+  const item = (p: Project & { folder_id?: string | null }): ListProject => {
+    const cost = p.actual_cost ?? p.quoted_cost ?? p.estimated_cost;
+    const due = dueFor(p);
+    const folder = p.folder_id ? folderById.get(p.folder_id) : undefined;
+    return {
+      id: p.id, title: p.title, categoryName: p.categories?.name ?? null, status: p.status, completedOn: p.completed_on,
+      owner: p.owner, priority: p.priority, priorityLabel: priorityLabel(hh.priorities, p.priority), due,
+      // The due tag already shows the date; otherwise show a friendly date or the note.
+      when: due ? null : p.target_date ? new Date(p.target_date + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: p.target_date.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric" }) : p.target_note,
+      cost: cost != null ? Number(cost) : null,
+      blockedBy: p.blocked_by && p.status !== "Complete" ? openBlocker.get(p.blocked_by) ?? null : null,
+      // Grouped by folder, the group header already says which folder.
+      folder: folder && !byFolder ? { name: folder.name, color: folder.color } : null,
+    };
+  };
+
+  // Folder tiles: progress counts every live project in the folder, whatever the filters.
+  const shelf = folders.map((f) => {
+    const rows = (filed ?? []).filter((r) => r.folder_id === f.id);
+    return { ...f, total: rows.length, done: rows.filter((r) => r.status === "Complete").length };
+  });
+  const showShelf = !filtered && !byFolder;
+
+  // Grouped by folder: each folder (A–Z) that has matching projects, then the rest.
+  const groups = byFolder
+    ? [...folders.map((f) => ({ key: f.id, name: f.name, color: f.color as string | null, href: `/projects/folders/${f.id}` as string | null })),
+       { key: "none", name: "Not in a folder", color: null, href: null }]
+        .map((g) => ({ ...g, items: projects.filter((p) => ((p as Project & { folder_id?: string | null }).folder_id ?? "none") === g.key) }))
+        .filter((g) => g.items.length)
+    : [];
+
   return (
     <>
       <header className="flex items-end justify-between gap-3">
@@ -139,31 +180,40 @@ export default async function Projects({ searchParams }: { searchParams: Promise
         {filtered && <ClearAllLink />}
       </header>
       <div className="mt-4"><Suspense><SearchBox /></Suspense></div>
+      {showShelf && <FolderShelf folders={shelf} />}
       <Suspense><FilterBar categories={categories ?? []} me={myName} owners={hh.owners} priorities={hh.priorities} /></Suspense>
 
       <ul className="card mt-5 divide-y divide-line overflow-hidden">
-        {projects.map((p, i) => {
-          const cost = p.actual_cost ?? p.quoted_cost ?? p.estimated_cost;
-          const header = byStatus && (i === 0 || projects[i - 1].status !== p.status);
-          const due = dueFor(p);
-          return (
-            <Fragment key={p.id}>
-              {header && (
-                <li className="bg-moss/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-                  {p.status} · {projects.filter((x) => x.status === p.status).length}
-                </li>
-              )}
-              <ProjectListItem p={{
-                id: p.id, title: p.title, categoryName: p.categories?.name ?? null, status: p.status, completedOn: p.completed_on,
-                owner: p.owner, priority: p.priority, priorityLabel: priorityLabel(hh.priorities, p.priority), due,
-                // The due tag already shows the date; otherwise show a friendly date or the note.
-                when: due ? null : p.target_date ? new Date(p.target_date + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: p.target_date.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric" }) : p.target_note,
-                cost: cost != null ? Number(cost) : null,
-                blockedBy: p.blocked_by && p.status !== "Complete" ? openBlocker.get(p.blocked_by) ?? null : null,
-              }} />
-            </Fragment>
-          );
-        })}
+        {byFolder
+          ? groups.map((g) => (
+            <li key={g.key}>
+              <details open className="group">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 bg-moss/10 px-4 py-2.5 [&::-webkit-details-marker]:hidden">
+                  <span aria-hidden="true" className="text-xs text-muted transition-transform group-open:rotate-90">▶</span>
+                  {g.color ? <FolderIcon color={g.color} size={22} /> : null}
+                  <span className="min-w-0 flex-1 truncate font-bold">{g.name}</span>
+                  <span className="text-xs text-muted">{g.items.length}</span>
+                  {g.href && <Link href={g.href} className="text-xs font-semibold text-moss underline">Open</Link>}
+                </summary>
+                <ul className="divide-y divide-line border-t border-line">
+                  {g.items.map((p) => <ProjectListItem key={p.id} p={item(p)} />)}
+                </ul>
+              </details>
+            </li>
+          ))
+          : projects.map((p, i) => {
+            const header = byStatus && (i === 0 || projects[i - 1].status !== p.status);
+            return (
+              <Fragment key={p.id}>
+                {header && (
+                  <li className="bg-moss/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+                    {p.status} · {projects.filter((x) => x.status === p.status).length}
+                  </li>
+                )}
+                <ProjectListItem p={item(p)} />
+              </Fragment>
+            );
+          })}
         {projects.length === 0 && <li className="p-6 text-center text-sm text-muted">Nothing found under these leaves. 🍂 Try fewer words or clear the filters.</li>}
       </ul>
 

@@ -27,6 +27,7 @@ export type Project = {
   id: string;
   title: string;
   category_id: string | null;
+  folder_id?: string | null;
   priority: number;
   seasons: string[];
   diy_hire: string | null;
