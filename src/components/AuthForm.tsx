@@ -5,6 +5,7 @@ import { Cottage } from "@/components/Whimsy";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "@/components/PasswordInput";
 import { friendlyError } from "@/lib/errors";
 import { INVITE_KEY, inviteCodeFrom } from "@/lib/inviteCode";
 
@@ -110,7 +111,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {confirmMessage && <p className="rounded-xl bg-moss/10 p-2 text-sm text-moss">{confirmMessage}</p>}
         {inviteCode && <p className="rounded-xl bg-moss/10 p-2 text-sm text-moss">🔑 You&apos;ve been invited to a household (code {inviteCode}). {mode === "login" ? "Log in" : "Sign up"} and you&apos;ll join it next.</p>}
         <input className="input" type="email" required placeholder="Email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="input" type="password" required minLength={8} placeholder="Password (8+ characters)"
+        <PasswordInput className="input" required minLength={8} placeholder="Password (8+ characters)"
           autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <p className="text-sm text-berry">{error}</p>}
         {info && <p className="text-sm text-moss">{info}</p>}
