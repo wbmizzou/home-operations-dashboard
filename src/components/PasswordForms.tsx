@@ -47,7 +47,7 @@ export function ForgotForm() {
           <h2 className="text-xl">Check your email 📬</h2>
           <p className="text-sm text-muted">
             If <b className="text-ink">{email.trim()}</b> has a Home Hollow account, a link to set a new password is on its way.
-            Open it <b className="text-ink">on this device, in this browser</b>. The link works once and expires after an hour.
+            It can take a minute; check spam too. The link works once and expires after an hour.
           </p>
           <button type="button" onClick={() => setSent(false)} className="text-sm text-moss underline">Use a different email</button>
         </div>

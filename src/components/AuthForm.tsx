@@ -79,6 +79,8 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         options: { emailRedirectTo: `${window.location.origin}/auth/confirm` },
       });
       if (error) setError(friendlyError(error));
+      // Supabase answers a sign-up for an existing email with no identities (and sends no email).
+      else if (data.user && data.user.identities?.length === 0) setInfo("That email already has an account. Log in instead, or tap “Forgot password?” on the login page if you don't remember the password.");
       else if (data.session) { router.replace("/welcome"); router.refresh(); }
       else setInfo("Check your email to confirm your account, then log in.");
     }
