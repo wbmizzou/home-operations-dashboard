@@ -16,8 +16,9 @@ export function Card({ title, hint, children }: { title: string; hint?: string; 
 }
 
 /* 1 · Pipeline: one segmented bar, idea -> in motion. Complete/Recurring excluded. */
-export function PipelineBar({ projects }: { projects: Project[] }) {
-  const counts = PIPELINE_STAGES.map((s, i) => ({ s, i, n: projects.filter((p) => p.status === s).length }));
+export function PipelineBar({ projects, stages = [...PIPELINE_STAGES] }: { projects: Project[]; stages?: string[] }) {
+  // Colors run light → dark across the stages (8 shades; extra custom stages share the darkest).
+  const counts = stages.map((s, i) => ({ s, i: Math.min(7, Math.round((i * 7) / Math.max(1, stages.length - 1))), n: projects.filter((p) => p.status === s).length }));
   const shown = counts.filter((c) => c.n > 0);
   const total = shown.reduce((a, c) => a + c.n, 0);
   return (

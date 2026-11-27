@@ -7,6 +7,7 @@ import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
 import { approxMonths, ruleFromMonths, type Recurrence } from "@/lib/rrule";
 import { toast } from "@/lib/toast";
 import { DIY_HIRE, SEASONS, STATUSES, type Project } from "@/lib/constants";
+import { FORM_STATUS_POSITION } from "@/lib/statuses";
 import { friendlyError } from "@/lib/errors";
 import { priorityName, type PriorityLevel } from "@/lib/priorities";
 import { FOLDER_COLORS, type Folder } from "@/lib/folders";
@@ -17,6 +18,7 @@ const str = (v: FormDataEntryValue | null) => (v === null || String(v).trim() ==
 const NEW_CATEGORY = "__new__";
 const NEW_PRIORITY = "__new_priority__";
 const NEW_FOLDER = "__new_folder__";
+const NEW_STATUS = "__new_status__";
 const today = () => new Date().toISOString().slice(0, 10);
 
 type Props = {
@@ -29,6 +31,8 @@ type Props = {
   seedDate?: string | null;
   categories: { id: string; name: string }[];
   folders: Folder[];
+  /** The household's statuses, in order. */
+  statuses?: string[];
   /** Pre-selected folder for a new project (e.g. "Add a project to this folder"). */
   defaultFolderId?: string | null;
   projects: { id: string; title: string }[];
@@ -39,12 +43,13 @@ function Label({ children }: { children: React.ReactNode }) {
   return <span className="mb-1 block text-sm font-medium text-muted">{children}</span>;
 }
 
-export default function ProjectForm({ categories, folders, defaultFolderId, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate, priorities }: Props) {
+export default function ProjectForm({ categories, folders, statuses = [...STATUSES], defaultFolderId, projects, initial, formId, hideSubmit, owners, defaultOwner, seedDate, priorities }: Props) {
   const router = useRouter();
   const [seasons, setSeasons] = useState<string[]>(initial?.seasons ?? []);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [catChoice, setCatChoice] = useState(initial?.category_id ?? "");
+  const [statusChoice, setStatusChoice] = useState<string>(initial?.status ?? "Not Started");
   const [folderChoice, setFolderChoice] = useState(initial ? (initial.folder_id ?? "") : (defaultFolderId ?? ""));
   const [newFolderColor, setNewFolderColor] = useState<string>(FOLDER_COLORS[0]);
   // Priority comes from the household's own levels; "New priority level…" adds one, like categories.
@@ -126,7 +131,19 @@ export default function ProjectForm({ categories, folders, defaultFolderId, proj
       priority = next;
     }
 
-    const status = String(f.get("status"));
+    // "New status…" adds a custom status (placed after Waiting) and uses it.
+    let status = statusChoice;
+    if (statusChoice === NEW_STATUS) {
+      const name = str(f.get("new_status"));
+      if (!name) { setError("Name the new status, or pick one from the list."); setBusy(false); return; }
+      const existing = statuses.find((s) => s.toLowerCase() === name.toLowerCase());
+      if (existing) status = existing;
+      else {
+        const { error } = await supabase.from("statuses").insert({ name, position: FORM_STATUS_POSITION });
+        if (error) { setError(friendlyError(error)); setBusy(false); return; }
+        status = name;
+      }
+    }
     let completed_on = str(f.get("completed_on"));
     // Finished projects always carry a completion date (feeds the resale-value chart).
     if (status === "Complete" && !completed_on) completed_on = today();
@@ -162,7 +179,7 @@ export default function ProjectForm({ categories, folders, defaultFolderId, proj
     if (another) {
       // Fresh blank form for the next one.
       toast(`Saved “${values.title}” ✓ — ready for the next one`);
-      setSeasons([]); setCatChoice(""); setFolderChoice(folder_id ?? ""); setPrioChoice(String(priority)); setRepeats(false); setRule(defaultRule()); setFormKey((k) => k + 1); setBusy(false);
+      setSeasons([]); setCatChoice(""); setStatusChoice(status); setFolderChoice(folder_id ?? ""); setPrioChoice(String(priority)); setRepeats(false); setRule(defaultRule()); setFormKey((k) => k + 1); setBusy(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
       router.refresh();
       return;
@@ -233,7 +250,13 @@ export default function ProjectForm({ categories, folders, defaultFolderId, proj
           )}
         </div>
         <label className="block"><Label>Status</Label>
-          <select name="status" className="input" defaultValue={initial?.status ?? "Not Started"}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select></label>
+          <select className="input" value={statusChoice} onChange={(e) => { markDirty(); setStatusChoice(e.target.value); }}>
+            {statuses.map((s) => <option key={s}>{s}</option>)}
+            {initial && !statuses.includes(initial.status) && <option>{initial.status}</option>}
+            <option value={NEW_STATUS}>＋ New status…</option>
+          </select>
+          {statusChoice === NEW_STATUS && <input name="new_status" className="input mt-2" placeholder="Name the new status" maxLength={30} autoFocus aria-label="New status name" />}
+        </label>
         <div>
           <label className="block"><Label>Priority</Label>
             <select className="input" value={prioChoice} onChange={(e) => { markDirty(); setPrioChoice(e.target.value); }}>

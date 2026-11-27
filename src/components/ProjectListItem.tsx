@@ -34,7 +34,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const short = (d: string) => new Date(d + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 /** A project row: tap the status to change it; swipe left to reveal Delete (with Undo afterwards). */
-export default function ProjectListItem({ p }: { p: ListProject }) {
+export default function ProjectListItem({ p, statuses = [...STATUSES] }: { p: ListProject; statuses?: string[] }) {
   const router = useRouter();
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -173,7 +173,7 @@ export default function ProjectListItem({ p }: { p: ListProject }) {
           <div role="dialog" aria-modal="true" aria-labelledby={`st-${p.id}`} className="card w-full max-w-sm p-4" onClick={(e) => e.stopPropagation()}>
             <h2 id={`st-${p.id}`} className="truncate px-1 text-lg">Move “{p.title}” to…</h2>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              {STATUSES.map((s) => (
+              {statuses.map((s) => (
                 <button key={s} type="button" onClick={() => changeStatus(s)} autoFocus={s === p.status}
                   className={`rounded-xl border px-3 py-2.5 text-left text-sm font-semibold ${s === p.status ? "border-moss bg-moss text-white" : "border-line"}`}>
                   {s === "Complete" ? "✅ " : ""}{s}{s === p.status ? " ✓" : ""}

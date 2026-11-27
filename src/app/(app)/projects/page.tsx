@@ -11,7 +11,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requireHousehold } from "@/lib/household";
 import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import { isoDate } from "@/lib/dates";
-import { STATUS_SORT_ORDER, money, type Project } from "@/lib/constants";
+import { money, type Project } from "@/lib/constants";
+import { statusRanker } from "@/lib/statuses";
 import { priorityLabel } from "@/lib/priorities";
 
 export const dynamic = "force-dynamic";
@@ -96,7 +97,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
   // Default sort is by status (a custom order the database can't express), then priority, then name.
   const byStatus = !sp.sort || sp.sort === "status";
   const byFolder = sp.sort === "folder";
-  const rank = (st: string) => { const i = STATUS_SORT_ORDER.indexOf(st as (typeof STATUS_SORT_ORDER)[number]); return i === -1 ? 99 : i; };
+  const rank = statusRanker(hh.statuses);
   if (byStatus || byFolder) {
     projects = [...projects].sort((a, b) => rank(a.status) - rank(b.status) || a.priority - b.priority || a.title.localeCompare(b.title));
   }
@@ -166,7 +167,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
     : [];
 
   return (
-    <BulkSelect options={{ categories: categories ?? [], folders, priorities: hh.priorities, owners: hh.owners, visibleIds: projects.map((p) => p.id) }}>
+    <BulkSelect options={{ categories: categories ?? [], folders, priorities: hh.priorities, owners: hh.owners, statuses: hh.statusNames, visibleIds: projects.map((p) => p.id) }}>
       <header className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-3xl text-moss">Projects</h1>
@@ -185,7 +186,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
       </header>
       <div className="mt-4"><Suspense><SearchBox /></Suspense></div>
       {showShelf && <FolderShelf folders={shelf} />}
-      <Suspense><FilterBar categories={categories ?? []} me={myName} owners={hh.owners} priorities={hh.priorities} /></Suspense>
+      <Suspense><FilterBar categories={categories ?? []} me={myName} owners={hh.owners} priorities={hh.priorities} statuses={hh.statusNames} /></Suspense>
 
       <ul className="card mt-5 divide-y divide-line overflow-hidden">
         {byFolder
@@ -200,7 +201,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
                   {g.href && <Link href={g.href} className="text-xs font-semibold text-moss underline">Open</Link>}
                 </summary>
                 <ul className="divide-y divide-line border-t border-line">
-                  {g.items.map((p) => <ProjectListItem key={p.id} p={item(p)} />)}
+                  {g.items.map((p) => <ProjectListItem statuses={hh.statusNames} key={p.id} p={item(p)} />)}
                 </ul>
               </details>
             </li>
@@ -214,7 +215,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
                     {p.status} · {projects.filter((x) => x.status === p.status).length}
                   </li>
                 )}
-                <ProjectListItem p={item(p)} />
+                <ProjectListItem statuses={hh.statusNames} p={item(p)} />
               </Fragment>
             );
           })}

@@ -7,7 +7,8 @@ import FolderIcon from "@/components/FolderIcon";
 import FolderActions from "@/components/FolderActions";
 import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import { isoDate } from "@/lib/dates";
-import { STATUS_SORT_ORDER, money, type Project } from "@/lib/constants";
+import { money, type Project } from "@/lib/constants";
+import { statusRanker } from "@/lib/statuses";
 import { priorityLabel } from "@/lib/priorities";
 import type { Folder } from "@/lib/folders";
 
@@ -26,7 +27,7 @@ export default async function FolderPage({ params }: { params: Promise<{ id: str
   if (!folder) notFound();
   const f = folder as Folder;
 
-  const rank = (st: string) => { const i = STATUS_SORT_ORDER.indexOf(st as (typeof STATUS_SORT_ORDER)[number]); return i === -1 ? 99 : i; };
+  const rank = statusRanker(hh.statuses);
   const projects = ((rows ?? []) as Project[]).sort((a, b) => rank(a.status) - rank(b.status) || a.priority - b.priority || a.title.localeCompare(b.title));
   const open = projects.filter((p) => p.status !== "Complete");
   const done = projects.filter((p) => p.status === "Complete");
@@ -85,7 +86,7 @@ export default async function FolderPage({ params }: { params: Promise<{ id: str
 
       <h2 className="mt-6 text-lg">Still to do</h2>
       <ul className="card mt-2 divide-y divide-line overflow-hidden">
-        {open.map((p) => <ProjectListItem key={p.id} p={item(p)} />)}
+        {open.map((p) => <ProjectListItem statuses={hh.statusNames} key={p.id} p={item(p)} />)}
         {open.length === 0 && <li className="p-5 text-center text-sm text-muted">{projects.length ? "All done here! 🎉" : "Nothing in this folder yet. Add a project, or pick this folder on any project's page."}</li>}
       </ul>
 
@@ -93,7 +94,7 @@ export default async function FolderPage({ params }: { params: Promise<{ id: str
         <>
           <h2 className="mt-6 text-lg">Done</h2>
           <ul className="card mt-2 divide-y divide-line overflow-hidden">
-            {done.map((p) => <ProjectListItem key={p.id} p={item(p)} />)}
+            {done.map((p) => <ProjectListItem statuses={hh.statusNames} key={p.id} p={item(p)} />)}
           </ul>
         </>
       )}

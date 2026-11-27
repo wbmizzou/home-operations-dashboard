@@ -45,7 +45,7 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
         </p>
       )}
       {isRecurring(p) && p.status !== "Complete" && <ServiceLog projectId={p.id} months={p.recurrence_months} logs={logs ?? []} target={p.target_date} rule={p.recurrence} />}
-      <ProjectForm formId="project-form" hideSubmit owners={hh.owners} priorities={hh.priorities} seedDate={logs?.[0]?.performed_on ?? (p as Project & { created_at?: string }).created_at?.slice(0, 10) ?? null} categories={cats ?? []} folders={folders ?? []} projects={others ?? []} initial={p} />
+      <ProjectForm formId="project-form" hideSubmit statuses={hh.statusNames} owners={hh.owners} priorities={hh.priorities} seedDate={logs?.[0]?.performed_on ?? (p as Project & { created_at?: string }).created_at?.slice(0, 10) ?? null} categories={cats ?? []} folders={folders ?? []} projects={others ?? []} initial={p} />
     </>
   );
 }

@@ -3,11 +3,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PRIORITIES } from "@/lib/constants";
 import type { PriorityLevel } from "@/lib/priorities";
+import { BUILTIN_STATUSES, type StatusDef } from "@/lib/statuses";
 export type { PriorityLevel } from "@/lib/priorities";
 
 export type Household = { id: string; name: string; hero: "cottage" | "hollow"; invite_code: string; invite_expires_at: string };
 export type Member = { user_id: string; display_name: string; role: "owner" | "member" };
-export type HouseholdContext = { household: Household; members: Member[]; me: string | null; myUserId: string | null; isOwner: boolean; owners: string[]; priorities: PriorityLevel[] };
+export type HouseholdContext = { household: Household; members: Member[]; me: string | null; myUserId: string | null; isOwner: boolean; owners: string[]; priorities: PriorityLevel[]; statuses: StatusDef[]; statusNames: string[] };
 
 /**
  * The signed-in person's household, members and owner choices (cached per request).
@@ -23,12 +24,13 @@ export const getHousehold = cache(async (): Promise<HouseholdContext | null> => 
   }
   if (!household) return null;
 
-  const [{ data: members }, { data: me }, { data: used }, { data: auth }, { data: levels }] = await Promise.all([
+  const [{ data: members }, { data: me }, { data: used }, { data: auth }, { data: levels }, { data: statusRows }] = await Promise.all([
     supabase.from("household_members").select("user_id, display_name, role").order("joined_at"),
     supabase.rpc("current_owner"),
     supabase.from("projects").select("owner").not("owner", "is", null),
     supabase.auth.getUser(),
     supabase.from("priority_levels").select("level, label, focus").order("level"),
+    supabase.from("statuses").select("name, position, builtin").order("position").order("name"),
   ]);
   const myUserId = auth.user?.id ?? null;
   const isOwner = (members ?? []).some((m) => m.user_id === myUserId && m.role === "owner");
@@ -40,7 +42,10 @@ export const getHousehold = cache(async (): Promise<HouseholdContext | null> => 
   const priorities: PriorityLevel[] = levels?.length
     ? levels.map((l) => ({ value: l.level as number, label: l.label as string, focus: (l.focus as string | null) ?? null }))
     : PRIORITIES.map((p) => ({ value: p.value, label: p.label, focus: p.focus }));
-  return { household: household as Household, members: (members ?? []) as Member[], me: (me as string | null) ?? null, myUserId, isOwner, owners, priorities };
+  // The household's statuses in lifecycle order (the built-ins if none are set up yet).
+  const statuses = (statusRows?.length ? statusRows : BUILTIN_STATUSES) as StatusDef[];
+  return { household: household as Household, members: (members ?? []) as Member[], me: (me as string | null) ?? null, myUserId, isOwner, owners, priorities,
+    statuses, statusNames: statuses.map((s) => s.name) };
 });
 
 /**
