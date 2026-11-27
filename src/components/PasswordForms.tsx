@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Cottage } from "@/components/Whimsy";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "@/components/PasswordInput";
 import { friendlyError } from "@/lib/errors";
 
 function Shell({ children, footer }: { children: React.ReactNode; footer?: React.ReactNode }) {
@@ -102,9 +103,9 @@ export function NewPasswordForm() {
     <Shell footer={<Link href="/" className="text-moss underline">Cancel</Link>}>
       <form onSubmit={submit} className="card space-y-3 p-5">
         <h2 className="text-xl">Set a new password 🔑</h2>
-        <input className="input" type="password" required minLength={8} placeholder="New password (8+ characters)" autoComplete="new-password"
+        <PasswordInput className="input" required minLength={8} placeholder="New password (8+ characters)" autoComplete="new-password"
           value={password} onChange={(e) => setPassword(e.target.value)} aria-label="New password" autoFocus />
-        <input className="input" type="password" required minLength={8} placeholder="Type it again" autoComplete="new-password"
+        <PasswordInput className="input" required minLength={8} placeholder="Type it again" autoComplete="new-password"
           value={again} onChange={(e) => setAgain(e.target.value)} aria-label="Confirm new password" />
         {error && <p role="alert" className="text-sm text-berry">{error}</p>}
         <button className="btn inline-flex w-full" disabled={busy}>{busy ? "Saving…" : "Save new password"}</button>
