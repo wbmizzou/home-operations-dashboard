@@ -17,7 +17,7 @@ export default async function NewProject({ searchParams }: { searchParams: Promi
     <>
       <h1 className="text-3xl text-moss">Add a project</h1>
       <NewToolbar formId="project-form" />
-      <ProjectForm formId="project-form" hideSubmit owners={hh.owners} priorities={hh.priorities} defaultOwner={hh.members.length > 1 ? "Joint" : hh.me} categories={cats ?? []} folders={folders ?? []} defaultFolderId={defaultFolderId} projects={projects ?? []} />
+      <ProjectForm formId="project-form" hideSubmit statuses={hh.statusNames} owners={hh.owners} priorities={hh.priorities} defaultOwner={hh.members.length > 1 ? "Joint" : hh.me} categories={cats ?? []} folders={folders ?? []} defaultFolderId={defaultFolderId} projects={projects ?? []} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import ThemeToggle from "@/components/ThemeToggle";
 import RecurringStrip from "@/components/RecurringStrip";
 import { requireHousehold } from "@/lib/household";
+import { pipelineStages } from "@/lib/statuses";
 import { currentSeason, type Project } from "@/lib/constants";
 import { Footer, HeroScene } from "@/components/Whimsy";
 import { isoDate, nowMs } from "@/lib/dates";
@@ -123,7 +124,7 @@ export default async function Dashboard() {
         <SpendChart now={nowMs()} events={events} total={spent} completed={completed.length} />
         <div className="grid gap-4 lg:grid-cols-2">
           <ProgressRing done={completed.length} open={open.length} inMotion={inMotion} />
-          <PipelineBar projects={projects} />
+          <PipelineBar projects={projects} stages={pipelineStages(hh.statuses)} />
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <RankedBars title="Open by priority" hint="Tap a bar to see the projects" rows={priorityRows(open, hh.priorities)} />

@@ -17,6 +17,8 @@ export type BulkOptions = {
   folders: { id: string; name: string }[];
   priorities: PriorityLevel[];
   owners: string[];
+  /** The household's statuses, in order. */
+  statuses: string[];
   /** Every project id currently shown, for "Select all". */
   visibleIds: string[];
 };
@@ -54,7 +56,7 @@ export default function BulkSelect({ children, options }: { children: React.Reac
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const value_ = (f: Field) => (f === "priority" ? String(options.priorities[0]?.value ?? 1) : f === "status" ? STATUSES[0] : "");
+  const value_ = (f: Field) => (f === "priority" ? String(options.priorities[0]?.value ?? 1) : f === "status" ? (options.statuses[0] ?? STATUSES[0]) : "");
   const bulk: Bulk = {
     selecting, selected,
     toggle: (id) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }),
@@ -68,7 +70,7 @@ export default function BulkSelect({ children, options }: { children: React.Reac
     if (f === "category_id") return [{ value: "", label: "No category" }, ...options.categories.map((c) => ({ value: c.id, label: c.name }))];
     if (f === "folder_id") return [{ value: "", label: "No folder" }, ...options.folders.map((c) => ({ value: c.id, label: c.name }))];
     if (f === "priority") return options.priorities.map((p) => ({ value: String(p.value), label: priorityName(p) }));
-    if (f === "status") return STATUSES.map((s) => ({ value: s, label: s }));
+    if (f === "status") return options.statuses.map((s) => ({ value: s, label: s }));
     return [{ value: "", label: "Unassigned" }, ...options.owners.map((o) => ({ value: o, label: o }))];
   }
 
