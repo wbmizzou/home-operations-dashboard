@@ -17,7 +17,7 @@ function contentSecurityPolicy(nonce: string) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     // Inline style attributes (React style={…}) can't carry a nonce.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data:",
+    `img-src 'self' blob: data: ${supabase}`.trim(),
     "font-src 'self'",
     `connect-src 'self' ${supabase} ${realtime}`.trim(),
     "worker-src 'self'",
