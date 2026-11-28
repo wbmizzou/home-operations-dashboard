@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isRecurring, nextDueDate } from "@/lib/recurrence";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -13,10 +14,10 @@ import { PipelineBar, ProgressRing, RankedBars, SeasonHeatmap, SpendChart, prior
 export const dynamic = "force-dynamic";
 
 const GREETING: Record<string, string> = {
-  Spring: "🌱 Buds are up in the hollow",
-  Summer: "☀️ Long, golden days at the cottage",
-  Fall: "🍂 Acorn season in the hollow",
-  Winter: "❄️ Cozy by the chimney",
+  Spring: "Buds are up in the hollow",
+  Summer: "Long, golden days at the cottage",
+  Fall: "Acorn season in the hollow",
+  Winter: "Cozy by the chimney",
   Anytime: "Welcome home",
 };
 
@@ -24,8 +25,8 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-xl">{title}</h2>
-        {hint && <span className="text-xs text-muted">{hint}</span>}
+        <h2 className="text-base">{title}</h2>
+        {hint && <span className="text-sm tabular-nums text-muted">{hint}</span>}
       </div>
       {children}
     </section>
@@ -33,14 +34,15 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 }
 
 function ProjectRow({ p }: { p: Project }) {
+  const overdue = !!p.target_date && p.target_date < new Date().toISOString().slice(0, 10);
   return (
     <li>
-      <Link href={`/projects/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3">
+      <Link href={`/projects/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3 transition-colors duration-150 first:rounded-t-[15px] last:rounded-b-[15px] hover:bg-raised/60">
         <div className="min-w-0">
           <div className="truncate font-medium">{p.title}</div>
-          <div className="truncate text-xs text-muted">{p.categories?.name ?? "Uncategorized"} · {p.status}</div>
+          <div className="mt-0.5 truncate text-xs text-muted">{p.categories?.name ?? "Uncategorized"} · {p.status}</div>
         </div>
-        <span className={`shrink-0 text-xs ${p.target_date && p.target_date < new Date().toISOString().slice(0, 10) ? "font-semibold text-berry" : "text-muted"}`}>{p.target_date && p.target_date < new Date().toISOString().slice(0, 10) ? "Overdue · " : ""}{p.target_date ? new Date(p.target_date + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</span>
+        <span className={`shrink-0 text-xs tabular-nums ${overdue ? "font-medium text-berry" : "text-muted"}`}>{overdue ? "Overdue · " : ""}{p.target_date ? new Date(p.target_date + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</span>
       </Link>
     </li>
   );
@@ -104,14 +106,15 @@ export default async function Dashboard() {
 
   return (
     <>
-      <header className="card relative overflow-hidden !border-0 p-0">
-        <HeroScene className="absolute inset-0 h-full w-full" variant={hh.household.hero} />
-        <div className="relative flex items-start justify-between gap-3 p-5 pb-24 md:pb-28">
+      {/* On phones the scene is a band under the title on plain sky; from md up it fills the header */}
+      <header className="card relative overflow-hidden !border-0 p-0" style={{ background: "var(--sky1)" }}>
+        <HeroScene className="absolute inset-x-0 bottom-0 h-28 w-full md:inset-0 md:h-full" variant={hh.household.hero} />
+        <div className="relative flex items-start justify-between gap-4 p-5 pb-32 md:p-6 md:pb-28 lg:pb-40 xl:pb-56">
           <div>
-            <p className="text-sm font-semibold" style={{ color: "var(--bark)" }}>{GREETING[season]}</p>
-            <h1 className="text-3xl md:text-4xl" style={{ color: "var(--ink)" }}>{hh.household.name}</h1>
+            <p className="text-sm" style={{ color: "var(--bark)" }}>{GREETING[season]}</p>
+            <h1 className="font-display mt-1 text-3xl leading-tight md:text-4xl" style={{ color: "var(--ink)" }}>{hh.household.name}</h1>
           </div>
-          <Link href="/projects/new" className="btn hidden md:inline-flex">＋ Add project</Link>
+          <Link href="/projects/new" className="btn hidden md:inline-flex"><Plus size={18} strokeWidth={1.75} aria-hidden />Add project</Link>
           <ThemeToggle className="md:hidden" />
         </div>
       </header>
@@ -120,9 +123,9 @@ export default async function Dashboard() {
         <RecurringStrip soon={dueSoon.length > 0} items={recurring.map(({ p, due, logged }) => ({ id: p.id, title: p.title, months: p.recurrence_months, rule: p.recurrence, due, logged }))} />
       )}
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-8 space-y-4">
         <SpendChart now={nowMs()} events={events} total={spent} completed={completed.length} />
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
           <ProgressRing done={completed.length} open={open.length} inMotion={inMotion} />
           <PipelineBar projects={projects} stages={pipelineStages(hh.statuses)} />
         </div>
@@ -136,19 +139,19 @@ export default async function Dashboard() {
       <div className="grid gap-0 lg:grid-cols-2 lg:gap-6">
         <Section title={`Chores for the ${season.toLowerCase()}`}>
           <ul className="card divide-y divide-line">
-            {thisSeason.length ? thisSeason.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing tagged for {season}.</li>}
+            {thisSeason.length ? thisSeason.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing tagged for {season}</li>}
           </ul>
         </Section>
-        <Section title={`🛡️ ${hh.priorities[0]?.focus ?? hh.priorities[0]?.label ?? "Top priority"}`} hint={`${p1.length} open`}>
+        <Section title={`${hh.priorities[0]?.focus ?? hh.priorities[0]?.label ?? "Top priority"}`} hint={`${p1.length} open`}>
           <ul className="card divide-y divide-line">
-            {p1.length ? p1.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">All snug — nothing urgent in the burrow. 🌿</li>}
+            {p1.length ? p1.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">All snug, nothing urgent in the burrow</li>}
           </ul>
         </Section>
       </div>
 
-      <Section title="🗓️ Coming up next">
+      <Section title="Coming up next">
         <ul className="card divide-y divide-line">
-          {upcoming.length ? upcoming.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing on the calendar. Time for tea? ☕</li>}
+          {upcoming.length ? upcoming.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing on the calendar. Time for tea?</li>}
         </ul>
       </Section>
 

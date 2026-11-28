@@ -3,17 +3,21 @@
 /* Sylvan Ramble: a woodland trail palette */
 :root {
   color-scheme: light;
-  --bg: #f8f0dc;
-  --surface: #fffaf0;
-  --ink: #3a2c22;
-  --muted: #8a7767;
-  --line: #ecdfc2;
-  --moss: #5a8a45;
+  /* Neutral paper ramp; moss is the one accent, berry is for overdue only */
+  --bg: #f7f4ee;
+  --surface: #fdfbf7;
+  --raised: #f0ebe2;
+  --ink: #1f1b16;
+  --muted: #6b6257;
+  --faint: #8d8478;
+  --line: #e7e1d6;
+  --moss: #4a7638;
   --fern: #8fb86a;
   --bark: #8b5e3c;
   --gold: #e0a23a;
-  --berry: #c9566b;
+  --berry: #b4485d;
   --cream: #fff6e2;
+  --on-accent: #ffffff;
   --r1:#ece9cf;--r2:#d8e3b8;--r3:#c0d79b;--r4:#a6c77f;--r5:#8db866;--r6:#74a553;--r7:#5a8a45;--r8:#46703a;
   /* scene */
   --sky1:#ffe3c2; --sky2:#fdf1d6; --sun:#ffc457; --leaf:#e0894a;
@@ -25,17 +29,20 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #14201a;
-    --surface: #1d2d24;
-    --ink: #f4e9d2;
-    --muted: #b3a58d;
-    --line: #2e4235;
+    --bg: #161513;
+    --surface: #1c1a18;
+    --raised: #262421;
+    --ink: #efe9de;
+    --muted: #aaa398;
+    --faint: #8a847a;
+    --line: #2d2a26;
     --moss: #8fc474;
     --fern: #b3d98f;
     --bark: #d3a77c;
     --gold: #f0bd55;
-    --berry: #e3788c;
+    --berry: #e5788a;
     --cream: #fff3d9;
+    --on-accent: #12160f;
     --r1:#2c4234;--r2:#38573f;--r3:#456e4b;--r4:#558559;--r5:#67996a;--r6:#7fb27a;--r7:#98c88b;--r8:#b3dba0;
     --sky1:#1b2f3f; --sky2:#2d4a4a; --sun:#f7e6a8; --leaf:#d98a4f;
     --hill1:#2f5a46; --hill2:#26493a; --hill3:#1e3b30; --pine1:#183a2c; --pine2:#2a5642;
@@ -46,17 +53,20 @@
 }
 :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #14201a;
-    --surface: #1d2d24;
-    --ink: #f4e9d2;
-    --muted: #b3a58d;
-    --line: #2e4235;
+    --bg: #161513;
+    --surface: #1c1a18;
+    --raised: #262421;
+    --ink: #efe9de;
+    --muted: #aaa398;
+    --faint: #8a847a;
+    --line: #2d2a26;
     --moss: #8fc474;
     --fern: #b3d98f;
     --bark: #d3a77c;
     --gold: #f0bd55;
-    --berry: #e3788c;
+    --berry: #e5788a;
     --cream: #fff3d9;
+    --on-accent: #12160f;
     --r1:#2c4234;--r2:#38573f;--r3:#456e4b;--r4:#558559;--r5:#67996a;--r6:#7fb27a;--r7:#98c88b;--r8:#b3dba0;
     --sky1:#1b2f3f; --sky2:#2d4a4a; --sun:#f7e6a8; --leaf:#d98a4f;
     --hill1:#2f5a46; --hill2:#26493a; --hill3:#1e3b30; --pine1:#183a2c; --pine2:#2a5642;
@@ -68,72 +78,77 @@
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
+  --color-raised: var(--raised);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-faint: var(--faint);
   --color-line: var(--line);
   --color-moss: var(--moss);
   --color-fern: var(--fern);
   --color-bark: var(--bark);
   --color-gold: var(--gold);
   --color-berry: var(--berry);
-  --font-serif: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", "Varela Round", "Trebuchet MS", system-ui, sans-serif;
+  --font-sans: var(--font-figtree), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", system-ui, -apple-system, "Segoe UI", sans-serif;
-  background-image:
-    radial-gradient(900px 400px at 100% -10%, color-mix(in srgb, var(--fern) 18%, transparent), transparent),
-    radial-gradient(700px 400px at -10% 110%, color-mix(in srgb, var(--gold) 12%, transparent), transparent);
-  background-attachment: fixed;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.45;
 }
-body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:-1; opacity:.5;
-  background-image: radial-gradient(color-mix(in srgb, var(--fern) 22%, transparent) 1.5px, transparent 1.6px); background-size: 26px 26px; }
 
-.stitch { outline: 2px dashed color-mix(in srgb, var(--bark) 35%, transparent); outline-offset: -8px; }
+/* Kept for the "complete a project" card: a quiet dashed edge, like a page torn from the notebook */
+.stitch { outline: 1px dashed color-mix(in srgb, var(--bark) 30%, transparent); outline-offset: -6px; }
 
 html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 a, button, summary, select, label { touch-action: manipulation; }
 body { overscroll-behavior-y: none; }
 label.block, fieldset { min-width: 0; }
 
-h1, h2, h3, .font-display { font-family: var(--font-serif); font-weight: 700; letter-spacing: -0.005em; }
+h1, h2, h3 { font-weight: 500; letter-spacing: 0; }
+/* The serif is for the household name and the invested figure only */
+.font-display { font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.01em; }
+
+:focus-visible { outline: 2px solid var(--moss); outline-offset: 2px; border-radius: 6px; }
 
 @layer components {
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 1.6rem;
-  border-width: 2px;
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--bark) 14%, transparent);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(31, 27, 22, 0.04);
 }
 .input {
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 0.85rem;
-  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  padding: 10px 12px;
   font-size: 1rem;
   color: var(--ink);
 }
-.input:focus { outline: 2px solid var(--fern); outline-offset: 1px; }
+.input:focus { outline: 2px solid var(--moss); outline-offset: 1px; }
 /* iOS Safari gives date inputs their own intrinsic width and centered text, which makes
    them overflow the card. Force them to behave like the other fields. */
 .input { min-width: 0; max-width: 100%; box-sizing: border-box; }
 input.input[type="date"] {
   -webkit-appearance: none; appearance: none;
   display: block; width: 100%; min-width: 0; max-width: 100%;
-  min-height: 3.05rem; text-align: left;
+  min-height: 3rem; text-align: left;
 }
 input.input[type="date"]::-webkit-date-and-time-value { text-align: left; min-height: 1.4em; }
 input.input[type="date"]::-webkit-datetime-edit { padding: 0; }
 .btn {
-  align-items: center; justify-content: center; gap: .4rem;
-  background: var(--moss); color: #fff; font-weight: 600;
-  border-radius: 999px; padding: .75rem 1.25rem;
+  align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px;
+  background: var(--moss); color: var(--on-accent); font-weight: 500;
+  border-radius: 10px; padding: 10px 20px;
+  transition: background-color 150ms var(--ease-out), transform 150ms var(--ease-out);
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn { color: #0f1a14; } }
-:root[data-theme="dark"] .btn { color: #0f1a14; }
+.btn:hover { background: color-mix(in srgb, var(--moss) 88%, var(--ink)); }
 .btn:active { transform: scale(.98); }
 }
