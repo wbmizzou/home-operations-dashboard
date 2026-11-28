@@ -1,0 +1,20 @@
+{
+  "enabledPlugins": {
+    "ponytail@ponytail": true,
+    "egm@egm": true
+  },
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    },
+    "egm": {
+      "source": {
+        "source": "github",
+        "repo": "google/elephant-goldfish-model"
+      }
+    }
+  }
+}
