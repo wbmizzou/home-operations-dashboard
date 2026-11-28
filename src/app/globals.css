@@ -151,4 +151,25 @@ input.input[type="date"]::-webkit-datetime-edit { padding: 0; }
 }
 .btn:hover { background: color-mix(in srgb, var(--moss) 88%, var(--ink)); }
 .btn:active { transform: scale(.98); }
+/* Secondary action: raised paper with a hairline */
+.btn-quiet {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px; padding: 8px 16px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  font-size: 0.875rem; font-weight: 500;
+  transition: background-color 150ms var(--ease-out), transform 150ms var(--ease-out);
+}
+.btn-quiet:hover { background: var(--raised); }
+.btn-quiet:active { transform: scale(.98); }
+.btn-quiet:disabled { opacity: .45; }
+/* Toggle chip for filters; pressed = moss selection */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  font-size: 0.875rem;
+  transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out), border-color 150ms var(--ease-out);
+}
+.chip:hover { color: var(--ink); background: var(--raised); }
+.chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: var(--on-accent); font-weight: 500; }
 }

@@ -51,7 +51,7 @@ export default function MfaCard() {
     setBusy(false);
     if (error) return setError(friendlyError(error));
     setPending(null); setCode("");
-    toast("Two-step sign-in is on ✓");
+    toast("Two-step sign-in is on");
     await load(); router.refresh();
   }
 
@@ -67,14 +67,14 @@ export default function MfaCard() {
 
   return (
     <section className="card space-y-3 p-5">
-      <h2 className="text-lg">🔐 Two-step sign-in</h2>
+      <h2 className="text-lg">Two-step sign-in</h2>
       {factors === null ? <p className="text-sm text-muted">…</p> : factors.length > 0 ? (
         <>
           <p className="text-sm text-muted">On. Signing in asks for a 6-digit code from your authenticator app, as well as your password.</p>
           <ul className="space-y-1 text-sm">
             {factors.map((f) => (
               <li key={f.id} className="flex items-center justify-between gap-3">
-                <span>📱 {f.friendly_name || "Authenticator app"}</span>
+                <span>{f.friendly_name || "Authenticator app"}</span>
                 <button type="button" disabled={busy} onClick={() => remove(f.id)} className="text-sm text-berry underline">Turn off</button>
               </li>
             ))}
@@ -91,7 +91,7 @@ export default function MfaCard() {
           {error && <p className="text-sm text-berry">{error}</p>}
           <div className="flex gap-2">
             <button className="btn inline-flex" disabled={busy}>{busy ? "…" : "Turn on"}</button>
-            <button type="button" onClick={() => { setPending(null); setError(null); }} className="rounded-full border border-line px-4 py-2 text-sm">Cancel</button>
+            <button type="button" onClick={() => { setPending(null); setError(null); }} className="btn-quiet">Cancel</button>
           </div>
         </form>
       ) : (

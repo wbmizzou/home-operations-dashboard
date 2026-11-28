@@ -14,7 +14,7 @@ export default async function RecentlyDeleted() {
   return (
     <>
       <Link href="/projects" className="text-sm text-muted">← All projects</Link>
-      <h1 className="mt-1 text-3xl text-moss">🗑️ Recently deleted</h1>
+      <h1 className="mt-1 text-3xl">Recently deleted</h1>
       <p className="text-sm text-muted">Deleted projects wait here for 30 days, then they&apos;re removed for good.{isOwner ? "" : " Only the household owner can remove one sooner."}</p>
       <DeletedList canDeleteForever={isOwner} items={((data ?? []) as { id: string; title: string; deleted_at: string }[]).map((p) => ({ ...p, days_left: daysLeft(p.deleted_at) }))} />
     </>

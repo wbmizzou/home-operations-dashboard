@@ -1,7 +1,7 @@
 // Minimal service worker: nothing is cached (so data is never stale). It only
 // swaps in a friendly page when the network is down and a page can't load.
 const OFFLINE = "/offline.html";
-const CACHE = "home-hollow-offline-v1";
+const CACHE = "home-hollow-offline-v2";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.add(OFFLINE)));

@@ -57,12 +57,12 @@ export default function RecurrenceEditor({ value, onChange }: { value: Recurrenc
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-line p-3">
+    <div className="space-y-3 rounded-xl border border-line p-3">
       {/* Pattern */}
-      <div className="grid grid-cols-4 gap-1 rounded-full border border-line p-1" role="radiogroup" aria-label="Repeat pattern">
+      <div className="grid grid-cols-4 gap-1 rounded-[10px] bg-raised p-1" role="radiogroup" aria-label="Repeat pattern">
         {FREQS.map((f) => (
           <button key={f.v} type="button" role="radio" aria-checked={r.freq === f.v} onClick={() => setFreq(f.v)}
-            className={`rounded-full py-1.5 text-sm font-semibold ${r.freq === f.v ? "bg-moss text-white" : "text-muted"}`}>{f.l}</button>
+            className={`rounded-md py-1.5 text-sm transition-colors duration-150 ${r.freq === f.v ? "bg-surface font-medium text-ink shadow-[0_1px_2px_rgba(31,27,22,0.08)]" : "text-muted hover:text-ink"}`}>{f.l}</button>
         ))}
       </div>
 
@@ -82,7 +82,7 @@ export default function RecurrenceEditor({ value, onChange }: { value: Recurrenc
               return (
                 <button key={name} type="button" aria-pressed={on} aria-label={name}
                   onClick={() => { const cur = r.weekdays ?? []; const next = on ? cur.filter((x) => x !== i) : [...cur, i]; if (next.length) set({ weekdays: next }); }}
-                  className={`h-9 w-9 rounded-full border text-sm font-semibold ${on ? "border-moss bg-moss text-white" : "border-line text-muted"}`}>{name[0]}</button>
+                  className={`h-9 w-9 rounded-full border text-sm ${on ? "border-moss bg-moss font-medium text-[var(--on-accent)]" : "border-line text-muted"}`}>{name[0]}</button>
               );
             })}
           </div>
@@ -121,7 +121,7 @@ export default function RecurrenceEditor({ value, onChange }: { value: Recurrenc
       </div>
 
       <p className="rounded-xl bg-moss/10 px-3 py-2 text-sm text-moss">
-        🔁 {describe(r)}{next ? ` · first ${prettyDate(next)}` : " · no dates in this range"}
+        {describe(r)}{next ? ` · first ${prettyDate(next)}` : " · no dates in this range"}
       </p>
     </div>
   );

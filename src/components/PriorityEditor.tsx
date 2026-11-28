@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import { friendlyError } from "@/lib/errors";
 import type { PriorityLevel } from "@/lib/priorities";
+import { Plus, X } from "lucide-react";
 
 /** Settings card: rename, describe, add and remove the household's priority levels. */
 export default function PriorityEditor({ levels, isOwner }: { levels: PriorityLevel[]; isOwner: boolean }) {
@@ -23,7 +24,7 @@ export default function PriorityEditor({ levels, isOwner }: { levels: PriorityLe
     );
     setBusy(false);
     if (error) return toast(`Couldn't save: ${friendlyError(error)}`);
-    toast("Priority levels saved ✓"); router.refresh();
+    toast("Priority levels saved"); router.refresh();
   }
 
   function add() {
@@ -40,12 +41,12 @@ export default function PriorityEditor({ levels, isOwner }: { levels: PriorityLe
     const { error } = await supabase.from("priority_levels").delete().eq("level", level);
     if (error) return toast(`Couldn't remove: ${friendlyError(error)}`);
     setRows(rows.filter((r) => r.value !== level));
-    toast("Priority level removed ✓"); router.refresh();
+    toast("Priority level removed"); router.refresh();
   }
 
   return (
     <section className="card space-y-3 p-5">
-      <h2 className="text-lg">🎯 Priority levels</h2>
+      <h2 className="text-lg">Priority levels</h2>
       <p className="text-sm text-muted">Name your levels however your household thinks about work. The first one is treated as most urgent.{!isOwner && " Only the household owner can remove a level."}</p>
       <ul className="space-y-2">
         {rows.map((r, i) => (
@@ -54,12 +55,12 @@ export default function PriorityEditor({ levels, isOwner }: { levels: PriorityLe
               onChange={(e) => setRows(rows.map((x) => (x.value === r.value ? { ...x, label: e.target.value } : x)))} />
             <input className="input" value={r.focus} maxLength={60} placeholder="What it means (optional)" aria-label={`Level ${i + 1} description`}
               onChange={(e) => setRows(rows.map((x) => (x.value === r.value ? { ...x, focus: e.target.value } : x)))} />
-            {isOwner && <button type="button" onClick={() => remove(r.value)} aria-label={`Remove ${r.label}`} className="px-1 text-sm text-muted hover:text-berry">✕</button>}
+            {isOwner && <button type="button" onClick={() => remove(r.value)} aria-label={`Remove ${r.label}`} className="flex h-8 w-8 items-center justify-center rounded-md text-faint transition-colors duration-150 hover:bg-raised hover:text-berry"><X size={16} strokeWidth={1.5} aria-hidden /></button>}
           </li>
         ))}
       </ul>
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={add} className="rounded-full border-2 border-moss px-4 py-2 text-sm font-semibold text-moss">＋ Add level</button>
+        <button type="button" onClick={add} className="btn-quiet"><Plus size={16} strokeWidth={1.75} aria-hidden />Add level</button>
         <button type="button" onClick={save} disabled={!changed || busy} className="btn inline-flex disabled:opacity-40">{busy ? "Saving…" : "Save levels"}</button>
       </div>
     </section>

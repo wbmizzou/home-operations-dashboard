@@ -10,7 +10,7 @@ import { friendlyError } from "@/lib/errors";
 import { INVITE_KEY, inviteCodeFrom } from "@/lib/inviteCode";
 
 const CONFIRM_MESSAGES: Record<string, string> = {
-  done: "Your email is confirmed ✓ Log in to continue.",
+  done: "Your email is confirmed. Log in to continue.",
   expired: "That confirmation link has expired or was already used. Log in, or sign up again for a new link.",
 };
 
@@ -92,12 +92,12 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6">
       <div className="mb-8 text-center">
         <div className="flex justify-center"><Cottage size={88} /></div>
-        <h1 className="mt-3 text-3xl text-moss">Home Hollow</h1>
+        <h1 className="font-display mt-3 text-3xl">Home Hollow</h1>
         <p className="mt-1 text-sm text-muted">A cozy home for projects &amp; upkeep</p>
       </div>
       {mfaFactor ? (
         <form onSubmit={submitCode} className="card space-y-3 p-5">
-          <h2 className="text-xl">One more step 🔐</h2>
+          <h2 className="text-xl">One more step</h2>
           <p className="text-sm text-muted">Enter the 6-digit code from your authenticator app.</p>
           <input className="input text-center tracking-[0.3em]" inputMode="numeric" autoComplete="one-time-code" required maxLength={8} autoFocus
             value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" aria-label="6-digit code" />
@@ -107,9 +107,9 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         </form>
       ) : (
       <form onSubmit={submit} className="card space-y-3 p-5">
-        <h2 className="text-xl">{mode === "login" ? "Welcome home 🍂" : "Create your account 🌱"}</h2>
+        <h2 className="text-xl">{mode === "login" ? "Welcome home" : "Create your account"}</h2>
         {confirmMessage && <p className="rounded-xl bg-moss/10 p-2 text-sm text-moss">{confirmMessage}</p>}
-        {inviteCode && <p className="rounded-xl bg-moss/10 p-2 text-sm text-moss">🔑 You&apos;ve been invited to a household (code {inviteCode}). {mode === "login" ? "Log in" : "Sign up"} and you&apos;ll join it next.</p>}
+        {inviteCode && <p className="rounded-xl bg-moss/10 p-2 text-sm text-moss">You&apos;ve been invited to a household (code {inviteCode}). {mode === "login" ? "Log in" : "Sign up"} and you&apos;ll join it next.</p>}
         <input className="input" type="email" required placeholder="Email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <PasswordInput className="input" required minLength={8} placeholder="Password (8+ characters)"
           autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} />

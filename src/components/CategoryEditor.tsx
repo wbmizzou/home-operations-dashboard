@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import { friendlyError } from "@/lib/errors";
+import { Plus, X } from "lucide-react";
 
 export type CategoryRow = { id: string; name: string; count: number };
 
@@ -28,7 +29,7 @@ export default function CategoryEditor({ categories, isOwner }: { categories: Ca
       if (error) { setBusy(false); return toast(`Couldn't save “${names[c.id].trim()}”: ${friendlyError(error)}`); }
     }
     setBusy(false);
-    toast("Categories saved ✓"); router.refresh();
+    toast("Categories saved"); router.refresh();
   }
 
   async function add(e: React.FormEvent) {
@@ -41,7 +42,7 @@ export default function CategoryEditor({ categories, isOwner }: { categories: Ca
     setBusy(false);
     if (error) return toast(`Couldn't add: ${friendlyError(error)}`);
     setNames({ ...names, [data.id]: name }); setAdding("");
-    toast(`Added “${name}” ✓`); router.refresh();
+    toast(`Added “${name}”`); router.refresh();
   }
 
   async function remove(c: CategoryRow) {
@@ -57,13 +58,13 @@ export default function CategoryEditor({ categories, isOwner }: { categories: Ca
     if (!data?.length) return toast("Only the household owner can remove a category");
     const target = categories.find((x) => x.id === moveTo)?.name;
     setRemoving(null); setMoveTo("");
-    toast(c.count ? `Removed “${c.name}” — moved ${c.count} project${c.count === 1 ? "" : "s"} to ${target ? `“${target}”` : "No category"} ✓` : `Removed “${c.name}” ✓`);
+    toast(c.count ? `Removed “${c.name}” — moved ${c.count} project${c.count === 1 ? "" : "s"} to ${target ? `“${target}”` : "No category"}` : `Removed “${c.name}”`);
     router.refresh();
   }
 
   return (
     <section className="card space-y-3 p-5">
-      <h2 className="text-lg">🏷️ Categories</h2>
+      <h2 className="text-lg">Categories</h2>
       <p className="text-sm text-muted">
         Rename, add or remove categories. Removing one asks where its projects should go, so you can merge two (e.g. Lawn into Landscaping).
         {!isOwner && " Only the household owner can remove a category."}
@@ -77,11 +78,11 @@ export default function CategoryEditor({ categories, isOwner }: { categories: Ca
               <span className="w-16 text-right text-xs text-muted">{c.count} project{c.count === 1 ? "" : "s"}</span>
               {isOwner && (
                 <button type="button" onClick={() => { setRemoving(removing === c.id ? null : c.id); setMoveTo(""); }}
-                  aria-label={`Remove ${c.name}`} aria-expanded={removing === c.id} className="px-1 text-sm text-muted hover:text-berry">✕</button>
+                  aria-label={`Remove ${c.name}`} aria-expanded={removing === c.id} className="flex h-8 w-8 items-center justify-center rounded-md text-faint transition-colors duration-150 hover:bg-raised hover:text-berry"><X size={16} strokeWidth={1.5} aria-hidden /></button>
               )}
             </div>
             {removing === c.id && (
-              <div className="mt-2 space-y-2 rounded-2xl border-2 p-3" style={{ borderColor: "var(--berry)" }}>
+              <div className="mt-2 space-y-2 rounded-xl border p-3" style={{ borderColor: "var(--berry)" }}>
                 {c.count > 0 ? (
                   <label className="block text-sm">
                     <span className="mb-1 block">Move its {c.count} project{c.count === 1 ? "" : "s"} to:</span>
@@ -92,8 +93,8 @@ export default function CategoryEditor({ categories, isOwner }: { categories: Ca
                   </label>
                 ) : <p className="text-sm">No projects use “{c.name}”.</p>}
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setRemoving(null)} disabled={busy} className="flex-1 rounded-full border border-line px-3 py-2 text-sm font-semibold">Cancel</button>
-                  <button type="button" onClick={() => remove(c)} disabled={busy} className="flex-1 rounded-full bg-berry px-3 py-2 text-sm font-semibold text-white">
+                  <button type="button" onClick={() => setRemoving(null)} disabled={busy} className="btn-quiet min-h-11 flex-1">Cancel</button>
+                  <button type="button" onClick={() => remove(c)} disabled={busy} className="flex-1 rounded-full bg-berry px-3 py-2 text-sm font-medium text-white">
                     {busy ? "Working…" : c.count ? "Move & remove" : "Remove"}
                   </button>
                 </div>
@@ -101,11 +102,11 @@ export default function CategoryEditor({ categories, isOwner }: { categories: Ca
             )}
           </li>
         ))}
-        {categories.length === 0 && <li className="text-sm text-muted">No categories yet.</li>}
+        {categories.length === 0 && <li className="text-sm text-muted">No categories yet</li>}
       </ul>
       <form onSubmit={add} className="flex gap-2">
         <input className="input" value={adding} maxLength={40} onChange={(e) => setAdding(e.target.value)} placeholder="New category" aria-label="New category name" />
-        <button className="shrink-0 rounded-full border-2 border-moss px-4 text-sm font-semibold text-moss" disabled={busy || !adding.trim()}>＋ Add</button>
+        <button className="btn-quiet shrink-0" disabled={busy || !adding.trim()}><Plus size={16} strokeWidth={1.75} aria-hidden />Add</button>
       </form>
       <button type="button" onClick={save} disabled={!changed.length || busy} className="btn inline-flex disabled:opacity-40">{busy ? "Saving…" : "Save names"}</button>
     </section>

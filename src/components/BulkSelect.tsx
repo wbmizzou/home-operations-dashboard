@@ -40,7 +40,7 @@ export function SelectButton() {
   if (!bulk) return null;
   return (
     <button type="button" onClick={bulk.selecting ? bulk.stop : bulk.start} aria-pressed={bulk.selecting}
-      className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-semibold ${bulk.selecting ? "border-moss bg-moss text-white" : "border-line"}`}>
+      className={`shrink-0 rounded-lg border px-3.5 py-2 text-sm transition-colors duration-150 ${bulk.selecting ? "border-moss bg-moss font-medium text-[var(--on-accent)]" : "border-line"}`}>
       {bulk.selecting ? "Done" : "Select"}
     </button>
   );
@@ -104,7 +104,7 @@ export default function BulkSelect({ children, options }: { children: React.Reac
       }
       router.refresh(); toast("Changes undone");
     };
-    toast(`Set ${label} to “${shown}” on ${ids.length} project${ids.length === 1 ? "" : "s"} ✓`, { label: "Undo", run: undo });
+    toast(`Set ${label} to “${shown}” on ${ids.length} project${ids.length === 1 ? "" : "s"}`, { label: "Undo", run: undo });
     bulk.stop(); router.refresh();
   }
 
@@ -132,7 +132,7 @@ export default function BulkSelect({ children, options }: { children: React.Reac
               <div className="flex flex-wrap gap-2">
                 {FIELDS.map((f) => (
                   <button key={f.key} type="button" onClick={() => { setField(f.key); setValue(value_(f.key)); }} aria-pressed={field === f.key}
-                    className={`rounded-full border px-3.5 py-2 text-sm font-semibold ${field === f.key ? "border-moss bg-moss text-white" : "border-line"}`}>{f.label}</button>
+                    className={`rounded-lg border px-3.5 py-2 text-sm transition-colors duration-150 ${field === f.key ? "border-moss bg-moss font-medium text-[var(--on-accent)]" : "border-line"}`}>{f.label}</button>
                 ))}
               </div>
             </div>
@@ -142,7 +142,7 @@ export default function BulkSelect({ children, options }: { children: React.Reac
               </select>
             </label>
             <div className="flex gap-3">
-              <button type="button" onClick={() => setSheet(false)} disabled={busy} className="flex-1 rounded-full border border-line px-4 py-3 font-semibold">Cancel</button>
+              <button type="button" onClick={() => setSheet(false)} disabled={busy} className="btn-quiet min-h-11 flex-1">Cancel</button>
               <button type="button" onClick={apply} disabled={busy} className="btn inline-flex flex-1">{busy ? "Updating…" : "Update"}</button>
             </div>
           </div>

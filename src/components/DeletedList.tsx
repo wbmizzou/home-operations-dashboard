@@ -21,7 +21,7 @@ export default function DeletedList({ items, canDeleteForever }: { items: { id: 
     router.refresh();
   }
 
-  if (items.length === 0) return <p className="card mt-5 p-6 text-center text-sm text-muted">Nothing here. Every project is safe and sound. 🌿</p>;
+  if (items.length === 0) return <p className="card mt-5 p-6 text-center text-sm text-muted">Nothing here. Every project is safe and sound.</p>;
   return (
     <ul className="card mt-5 divide-y divide-line overflow-hidden">
       {items.map((p) => {
@@ -35,7 +35,7 @@ export default function DeletedList({ items, canDeleteForever }: { items: { id: 
               </div>
             </div>
             <button type="button" disabled={busy === p.id} onClick={async () => { setBusy(p.id); await restoreProject(p.id, p.title, router); setBusy(null); }}
-              className="rounded-full border-2 border-moss px-3 py-1.5 text-sm font-semibold text-moss">Restore</button>
+              className="btn-quiet">Restore</button>
             {canDeleteForever && (
               <button type="button" disabled={busy === p.id} onClick={() => forever(p.id, p.title)} aria-label={`Delete ${p.title} forever`}
                 className="rounded-full px-2 py-1.5 text-sm text-berry underline">Forever</button>

@@ -42,19 +42,19 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
     const { data, error } = await supabase.from("households").update({ name: homeName.trim() }).eq("id", household.id).select("id");
     if (error) return toast(`Couldn't save: ${friendlyError(error)}`);
     if (!data?.length) return toast("Only the household owner can rename it");
-    toast("Household name saved ✓"); router.refresh();
+    toast("Household name saved"); router.refresh();
   }
   async function saveMe(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.from("household_members").update({ display_name: myName.trim() }).eq("user_id", myUserId);
     if (error) return toast(`Couldn't save: ${friendlyError(error)}`);
-    toast("Your name saved ✓ — existing projects keep their old owner name until edited"); router.refresh();
+    toast("Your name saved — existing projects keep their old owner name until edited"); router.refresh();
   }
   async function share() {
     const text = `Join our home on Home Hollow: ${link} (invite code ${pretty(code)}, works once, until ${shortDate(expires)})`;
     try {
       if (navigator.share) await navigator.share({ title: "Home Hollow invite", text, url: link });
-      else { await navigator.clipboard.writeText(text); toast("Invite copied ✓"); }
+      else { await navigator.clipboard.writeText(text); toast("Invite copied"); }
     } catch { /* share sheet dismissed */ }
   }
   async function newCode() {
@@ -62,7 +62,7 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
     const { data, error } = await supabase.rpc("regenerate_invite_code");
     if (error) return toast(`Couldn't change code: ${friendlyError(error)}`);
     setCode(data as string); setFresh(true);
-    toast("New invite code ready ✓"); router.refresh();
+    toast("New invite code ready"); router.refresh();
   }
   async function removeMember(m: Member) {
     if (!window.confirm(`Remove ${m.display_name} from ${household.name}? They'll lose access to all of its projects straight away.`)) return;
@@ -85,7 +85,7 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
   const lastOne = members.length === 1;
   return (
     <div className="mt-6 space-y-4">
-      <Card title="🏡 Household">
+      <Card title="Household">
         {isOwner ? (
           <form onSubmit={saveHome} className="flex gap-2">
             <input className="input" value={homeName} onChange={(e) => setHomeName(e.target.value)} maxLength={80} required aria-label="Household name" />
@@ -97,7 +97,7 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
           <ul className="space-y-1 text-sm">
             {members.map((m) => (
               <li key={m.user_id} className="flex items-center justify-between gap-3">
-                <span>👤 {m.display_name}{m.user_id === myUserId ? " (you)" : ""}{m.role === "owner" ? " · owner" : ""}</span>
+                <span>{m.display_name}{m.user_id === myUserId ? " (you)" : ""}{m.role === "owner" ? " · owner" : ""}</span>
                 {isOwner && m.user_id !== myUserId && (
                   <button type="button" onClick={() => removeMember(m)} className="text-xs text-berry underline">Remove</button>
                 )}
@@ -107,14 +107,14 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
         </div>
       </Card>
 
-      <Card title="🔑 Invite someone to your household">
+      <Card title="Invite someone to your household">
         <p className="text-sm text-muted">They&apos;ll see and edit all of this household&apos;s projects. Each code works for one person and expires after 14 days.</p>
         {expired ? (
-          <p className="rounded-2xl border-2 border-dashed border-line px-4 py-3 text-sm text-muted">
+          <p className="rounded-2xl border border-dashed border-line px-4 py-3 text-sm text-muted">
             This invite code has expired or been used. {isOwner ? "Make a new one below." : `Ask ${owner?.display_name ?? "the owner"} to make a new one.`}
           </p>
         ) : (
-          <div className="flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-line px-4 py-3">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-dashed border-line px-4 py-3">
             <div className="min-w-0">
               <div className="font-display text-xl tracking-[0.12em]">{pretty(code)}</div>
               <div className="text-xs text-muted">Works once · expires {shortDate(expires)}</div>
@@ -127,7 +127,7 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
 
       {children}
 
-      <Card title="👤 You">
+      <Card title="You">
         <form onSubmit={saveMe} className="flex gap-2">
           <input className="input" value={myName} onChange={(e) => setMyName(e.target.value)} maxLength={40} required aria-label="Your name" />
           <button className="btn inline-flex shrink-0">Save</button>
@@ -135,17 +135,17 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
         <p className="text-xs text-muted">Signed in as {email}</p>
         <div className="flex items-center justify-between">
           <ThemeToggle />
-          <button type="button" onClick={signOut} className="rounded-full border border-line px-4 py-2 text-sm font-semibold">Sign out</button>
+          <button type="button" onClick={signOut} className="btn-quiet">Sign out</button>
         </div>
       </Card>
 
-      <Card title="🔑 Password">
+      <Card title="Password">
         <p className="text-sm text-muted">Change the password you use to log in.</p>
-        <Link href="/reset-password" className="inline-flex rounded-full border-2 border-moss px-4 py-2 text-sm font-semibold text-moss">Change password</Link>
+        <Link href="/reset-password" className="btn-quiet">Change password</Link>
       </Card>
       <MfaCard />
 
-      <Card title="📜 Recent activity">
+      <Card title="Recent activity">
         {activity.length === 0 ? <p className="text-sm text-muted">Nothing yet.</p> : (
           <ul className="space-y-1 text-sm">
             {activity.map((a) => (
@@ -158,7 +158,7 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
         )}
       </Card>
 
-      <Card title="⚠️ Delete my account">
+      <Card title="Delete my account">
         <p className="text-sm text-muted">
           {lastOne
             ? "You're the only member, so this also permanently deletes this household and every project, category and service log in it."
@@ -167,7 +167,7 @@ export default function SettingsPanel({ household, members, myUserId, isOwner, e
         <label className="block"><span className="mb-1 block text-sm text-muted">Type DELETE to confirm</span>
           <input className="input" value={confirmDelete} onChange={(e) => setConfirmDelete(e.target.value)} autoCapitalize="characters" /></label>
         <button type="button" disabled={confirmDelete !== "DELETE" || busy} onClick={deleteAccount}
-          className="rounded-full bg-berry px-4 py-2.5 font-semibold text-white disabled:opacity-40">{busy ? "Deleting…" : "Delete my account"}</button>
+          className="rounded-full bg-berry px-4 py-2.5 font-medium text-white disabled:opacity-40">{busy ? "Deleting…" : "Delete my account"}</button>
       </Card>
     </div>
   );

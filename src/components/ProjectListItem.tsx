@@ -9,6 +9,7 @@ import { softDeleteProject } from "@/lib/projectActions";
 import { toast } from "@/lib/toast";
 import { friendlyError } from "@/lib/errors";
 import { useBulk } from "@/components/BulkSelect";
+import { Check, ChevronDown, Trash2 } from "lucide-react";
 
 export type ListProject = {
   id: string;
@@ -116,8 +117,8 @@ export default function ProjectListItem({ p, statuses = [...STATUSES] }: { p: Li
     router.refresh();
     const undo = { label: "Undo", run: async () => { await createClient().from("projects").update(prev).eq("id", p.id); router.refresh(); toast("Status restored"); } };
     if (next === "Complete") {
-      toast(`“${p.title}” complete ✓ — add the final cost?`, { label: "Add cost", run: () => router.push(`/projects/${p.id}`) });
-    } else toast(`Moved to ${next} ✓`, undo);
+      toast(`“${p.title}” complete — add the final cost?`, { label: "Add cost", run: () => router.push(`/projects/${p.id}`) });
+    } else toast(`Moved to ${next}`, undo);
   }
 
   const label = p.priorityLabel;
@@ -125,45 +126,45 @@ export default function ProjectListItem({ p, statuses = [...STATUSES] }: { p: Li
   return (
     <li ref={rowRef} className="relative overflow-hidden">
       <button type="button" onClick={() => setConfirming(true)} tabIndex={offset === 0 ? -1 : 0} aria-hidden={offset === 0}
-        className="absolute inset-y-0 right-0 flex items-center justify-center bg-berry text-sm font-semibold text-white"
+        className="absolute inset-y-0 right-0 flex items-center justify-center gap-1.5 bg-berry text-sm font-medium text-white"
         style={{ width: REVEAL }}>
-        🗑️ Delete
+        <Trash2 size={16} strokeWidth={1.5} aria-hidden />Delete
       </button>
 
       <div onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
-        className="relative flex items-center gap-3 bg-surface pr-4" style={{ transform: `translateX(${offset}px)`, transition: dragging ? "none" : "transform .2s ease", touchAction: "pan-y" }}>
+        className="relative flex items-center gap-3 bg-surface pr-4" style={{ transform: `translateX(${offset}px)`, transition: dragging ? "none" : "transform 200ms cubic-bezier(0.22, 1, 0.36, 1)", touchAction: "pan-y" }}>
         <Link href={`/projects/${p.id}`} draggable={false}
           onClick={(e) => { if (moved.current) { e.preventDefault(); moved.current = false; } else if (offset !== 0) { e.preventDefault(); setOffset(0); } }}
           className="min-w-0 flex-1 py-3 pl-4">
           <div className="truncate font-medium">{p.title}</div>
-          <div className="truncate text-xs text-muted">
-            {p.folder && <><span aria-hidden="true" className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-[-1px] ring-1 ring-[var(--bark)]/40" style={{ background: p.folder.color }} />{p.folder.name} · </>}
+          <div className="mt-0.5 truncate text-xs text-muted">
+            {p.folder && <><span aria-hidden="true" className="mr-1.5 inline-block h-2 w-2 rounded-full align-[0px]" style={{ background: p.folder.color }} />{p.folder.name} · </>}
             {p.categoryName ?? "Uncategorized"} · {p.owner ?? "Unassigned"}{p.when ? ` · ${p.when}` : ""}
           </div>
           {(p.due || p.blockedBy) && (
             <div className="mt-1 flex flex-wrap gap-1.5">
               {p.due && (
-                <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                <span className="rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums"
                   style={p.due.kind === "overdue"
                     ? { background: "color-mix(in srgb, var(--berry) 18%, transparent)", color: "var(--berry)" }
                     : { background: "color-mix(in srgb, var(--gold) 22%, transparent)", color: "var(--bark)" }}>
-                  {p.due.kind === "overdue" ? `⏰ Overdue · ${short(p.due.date)}` : `Due ${short(p.due.date)}`}
+                  {p.due.kind === "overdue" ? `Overdue · ${short(p.due.date)}` : `Due ${short(p.due.date)}`}
                 </span>
               )}
               {p.blockedBy && (
-                <span className="truncate rounded-full bg-line px-2 py-0.5 text-[11px] font-semibold text-muted">⛔ Waiting on {p.blockedBy}</span>
+                <span className="truncate rounded-md bg-raised px-1.5 py-0.5 text-xs text-muted">Waiting on {p.blockedBy}</span>
               )}
             </div>
           )}
         </Link>
         <div className="flex shrink-0 flex-col items-end gap-1 py-2">
-          <div className={`text-sm font-semibold ${priorityTone(p.priority)}`}>{label}</div>
+          <div className={`text-sm font-medium ${priorityTone(p.priority)}`}>{label}</div>
           <button type="button" onClick={() => { if (!moved.current && offset === 0) setStatusOpen(true); }}
             aria-label={`Status: ${p.status}. Tap to change.`}
-            className="rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-muted active:scale-95">
-            {p.status} ▾
+            className="inline-flex h-7 items-center gap-1 rounded-md border border-line px-2 text-xs text-muted transition-[background-color,transform] duration-150 hover:bg-raised active:scale-[.97]">
+            {p.status}<ChevronDown size={14} strokeWidth={1.5} aria-hidden />
           </button>
-          {p.cost != null && <div className="text-[11px] text-muted">{money(p.cost)}</div>}
+          {p.cost != null && <div className="text-xs tabular-nums text-muted">{money(p.cost)}</div>}
         </div>
       </div>
 
@@ -175,12 +176,12 @@ export default function ProjectListItem({ p, statuses = [...STATUSES] }: { p: Li
             <div className="mt-3 grid grid-cols-2 gap-2">
               {statuses.map((s) => (
                 <button key={s} type="button" onClick={() => changeStatus(s)} autoFocus={s === p.status}
-                  className={`rounded-xl border px-3 py-2.5 text-left text-sm font-semibold ${s === p.status ? "border-moss bg-moss text-white" : "border-line"}`}>
-                  {s === "Complete" ? "✅ " : ""}{s}{s === p.status ? " ✓" : ""}
+                  className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors duration-150 ${s === p.status ? "border-moss bg-moss font-medium text-[var(--on-accent)]" : "border-line hover:bg-raised"}`}>
+                  {s}{s === p.status && <Check size={16} strokeWidth={1.75} aria-hidden />}
                 </button>
               ))}
             </div>
-            <button type="button" onClick={() => setStatusOpen(false)} className="mt-3 w-full rounded-full border border-line px-4 py-2.5 font-semibold">Cancel</button>
+            <button type="button" onClick={() => setStatusOpen(false)} className="btn-quiet mt-3 w-full">Cancel</button>
           </div>
         </div>
       )}
@@ -194,9 +195,9 @@ export default function ProjectListItem({ p, statuses = [...STATUSES] }: { p: Li
             {error && <p className="text-sm text-berry">{error}</p>}
             <div className="flex gap-3">
               <button type="button" autoFocus onClick={() => { setConfirming(false); setOffset(0); }} disabled={busy}
-                className="flex-1 rounded-full border border-line px-4 py-3 font-semibold">Cancel</button>
+                className="btn-quiet min-h-11 flex-1">Cancel</button>
               <button type="button" onClick={remove} disabled={busy}
-                className="flex-1 rounded-full bg-berry px-4 py-3 font-semibold text-white">{busy ? "Deleting…" : "Yes, delete"}</button>
+                className="flex-1 rounded-full bg-berry px-4 py-3 font-medium text-white">{busy ? "Deleting…" : "Yes, delete"}</button>
             </div>
           </div>
         </div>

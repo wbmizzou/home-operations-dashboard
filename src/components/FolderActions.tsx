@@ -11,7 +11,7 @@ export default function FolderActions({ folder }: { folder: Folder }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}
-        className="shrink-0 rounded-full border border-line px-3.5 py-2 text-sm font-semibold active:scale-95">Edit</button>
+        className="btn-quiet shrink-0">Edit</button>
       {open && <FolderEditor folder={folder} onClose={() => setOpen(false)} onDeleted={() => router.push("/projects")} />}
     </>
   );

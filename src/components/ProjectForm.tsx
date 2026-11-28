@@ -178,13 +178,13 @@ export default function ProjectForm({ categories, folders, statuses = [...STATUS
     dirty.current = false;
     if (another) {
       // Fresh blank form for the next one.
-      toast(`Saved “${values.title}” ✓ — ready for the next one`);
+      toast(`Saved “${values.title}” — ready for the next one`);
       setSeasons([]); setCatChoice(""); setStatusChoice(status); setFolderChoice(folder_id ?? ""); setPrioChoice(String(priority)); setRepeats(false); setRule(defaultRule()); setFormKey((k) => k + 1); setBusy(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
       router.refresh();
       return;
     }
-    toast(editing ? "Saved ✓" : `Added “${values.title}” ✓`);
+    toast(editing ? "Saved" : `Added “${values.title}”`);
     router.push(editing ? "/projects" : defaultFolderId && folder_id === defaultFolderId ? `/projects/folders/${defaultFolderId}` : "/"); router.refresh();
   }
 
@@ -201,7 +201,7 @@ export default function ProjectForm({ categories, folders, statuses = [...STATUS
     const { data, error } = await createClient().from("projects").insert(copy).select("id").single();
     if (error) { setError(friendlyError(error)); setBusy(false); return; }
     dirty.current = false;
-    toast("Duplicated ✓ — you're editing the copy");
+    toast("Duplicated — you're editing the copy");
     router.push(`/projects/${data.id}`);
   }
 
@@ -227,7 +227,7 @@ export default function ProjectForm({ categories, folders, statuses = [...STATUS
             <select className="input" value={catChoice} onChange={(e) => setCatChoice(e.target.value)}>
               <option value="">No category</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              <option value={NEW_CATEGORY}>＋ New category…</option>
+              <option value={NEW_CATEGORY}>New category…</option>
             </select>
           </label>
           {catChoice === NEW_CATEGORY && (
@@ -239,7 +239,7 @@ export default function ProjectForm({ categories, folders, statuses = [...STATUS
             <select className="input" value={folderChoice} onChange={(e) => { markDirty(); setFolderChoice(e.target.value); }}>
               <option value="">No folder</option>
               {folders.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-              <option value={NEW_FOLDER}>＋ New folder…</option>
+              <option value={NEW_FOLDER}>New folder…</option>
             </select>
           </label>
           {folderChoice === NEW_FOLDER && (
@@ -253,7 +253,7 @@ export default function ProjectForm({ categories, folders, statuses = [...STATUS
           <select className="input" value={statusChoice} onChange={(e) => { markDirty(); setStatusChoice(e.target.value); }}>
             {statuses.map((s) => <option key={s}>{s}</option>)}
             {initial && !statuses.includes(initial.status) && <option>{initial.status}</option>}
-            <option value={NEW_STATUS}>＋ New status…</option>
+            <option value={NEW_STATUS}>New status…</option>
           </select>
           {statusChoice === NEW_STATUS && <input name="new_status" className="input mt-2" placeholder="Name the new status" maxLength={30} autoFocus aria-label="New status name" />}
         </label>
@@ -262,7 +262,7 @@ export default function ProjectForm({ categories, folders, statuses = [...STATUS
             <select className="input" value={prioChoice} onChange={(e) => { markDirty(); setPrioChoice(e.target.value); }}>
               {priorities.map((p) => <option key={p.value} value={p.value}>{priorityName(p)}</option>)}
               {initial && !priorities.some((p) => p.value === initial.priority) && <option value={initial.priority}>P{initial.priority}</option>}
-              <option value={NEW_PRIORITY}>＋ New priority level…</option>
+              <option value={NEW_PRIORITY}>New priority level…</option>
             </select>
           </label>
           {prioChoice === NEW_PRIORITY && (
@@ -287,7 +287,7 @@ export default function ProjectForm({ categories, folders, statuses = [...STATUS
             const on = seasons.includes(s);
             return (
               <button type="button" key={s} onClick={() => { markDirty(); setSeasons(on ? seasons.filter((x) => x !== s) : [...seasons, s]); }}
-                className={`rounded-full border px-4 py-2 text-sm ${on ? "border-moss bg-moss text-white" : "border-line text-muted"}`}>{s}</button>
+                className={`rounded-lg border px-3.5 py-2 text-sm transition-colors duration-150 ${on ? "border-moss bg-moss font-medium text-[var(--on-accent)]" : "border-line text-muted"}`}>{s}</button>
             );
           })}
         </div>
@@ -314,7 +314,7 @@ export default function ProjectForm({ categories, folders, statuses = [...STATUS
       <div>
         <label className="flex items-center gap-2 text-sm font-medium">
           <input type="checkbox" className="h-5 w-5 accent-[var(--moss)]" checked={repeats} onChange={(e) => { markDirty(); setRepeats(e.target.checked); }} />
-          🔁 Repeats — recurring upkeep
+          Repeats — recurring upkeep
         </label>
         {repeats && <div className="mt-2"><RecurrenceEditor value={rule} onChange={(r) => { markDirty(); setRule(r); }} /></div>}
       </div>

@@ -48,12 +48,12 @@ export default async function EditProject({ params }: { params: Promise<{ id: st
         <Link href="/projects">← All projects</Link>
         {inFolder && <Link href={`/projects/folders/${inFolder.id}`} className="inline-flex items-center gap-1.5"><FolderIcon color={inFolder.color} size={16} />{inFolder.name}</Link>}
       </div>
-      <h1 className="mt-1 text-3xl text-moss">{p.status === "Complete" ? "✅ " : ""}{p.title}</h1>
+      <h1 className="mt-1 text-3xl">{p.title}</h1>
       <EditToolbar id={p.id} title={p.title} defaultCost={p.actual_cost ?? p.quoted_cost ?? p.estimated_cost}
         canComplete={p.status !== "Complete" && !isRecurring(p)} formId="project-form" />
       {blocker && (
-        <p className="mt-3 rounded-2xl border-2 p-3 text-sm" style={{ borderColor: "var(--gold)", background: "color-mix(in srgb, var(--gold) 14%, var(--surface))" }}>
-          ⛔ This is waiting on <Link href={`/projects/${blocker.id}`} className="font-semibold underline">{blocker.title}</Link>, which is still <b>{blocker.status}</b>.
+        <p className="mt-3 rounded-xl border p-3 text-sm" style={{ borderColor: "var(--gold)", background: "color-mix(in srgb, var(--gold) 14%, var(--surface))" }}>
+          This is waiting on <Link href={`/projects/${blocker.id}`} className="font-semibold underline">{blocker.title}</Link>, which is still <b>{blocker.status}</b>.
         </p>
       )}
       <ProjectPhotos projectId={p.id} householdId={hh.household.id} photos={photos} />

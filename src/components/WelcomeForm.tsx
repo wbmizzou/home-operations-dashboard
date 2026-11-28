@@ -74,7 +74,7 @@ export default function WelcomeForm({ initialCode }: { initialCode: string }) {
 
   const tab = (m: "start" | "join", label: string) => (
     <button type="button" onClick={() => { setModeChoice(m); setError(null); }} aria-pressed={mode === m}
-      className={`flex-1 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold ${mode === m ? "bg-moss text-white" : "text-muted"}`}>{label}</button>
+      className={`flex-1 whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors duration-150 ${mode === m ? "bg-surface font-medium text-ink shadow-[0_1px_2px_rgba(31,27,22,0.08)]" : "text-muted hover:text-ink"}`}>{label}</button>
   );
 
   const label = mode === "start" ? "Create my household" : checked ? `Join ${checked.household}` : "Check code";
@@ -82,11 +82,11 @@ export default function WelcomeForm({ initialCode }: { initialCode: string }) {
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6 py-10">
       <div className="mb-6 text-center">
         <div className="flex justify-center"><Cottage size={88} /></div>
-        <h1 className="mt-3 text-3xl text-moss">Welcome to Home Hollow</h1>
+        <h1 className="font-display mt-3 text-3xl">Welcome to Home Hollow</h1>
         <p className="mt-1 text-sm text-muted">Track projects, improvements and upkeep for your home.</p>
       </div>
       <form onSubmit={submit} className="card space-y-3 p-5">
-        <div className="flex gap-1 rounded-full border border-line p-1">{tab("start", "🏡 Start new")}{tab("join", "🔑 Join one")}</div>
+        <div className="flex gap-1 rounded-[10px] bg-raised p-1">{tab("start", "Start new")}{tab("join", "Join one")}</div>
         {mode === "start" ? (
           <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Name your home</span>
             <input className="input" required maxLength={80} value={homeName} onChange={(e) => setHomeName(e.target.value)} placeholder="e.g. The Maple Street House" /></label>
@@ -96,7 +96,7 @@ export default function WelcomeForm({ initialCode }: { initialCode: string }) {
               placeholder="XXXX-XXXX-XXXX" autoCapitalize="characters" /></label>
         )}
         {mode === "join" && checked && (
-          <div className="rounded-2xl border-2 border-moss/40 bg-moss/10 p-3 text-sm">
+          <div className="rounded-xl border border-moss/40 bg-moss/10 p-3 text-sm">
             <div>You&apos;re joining <b className="font-display text-base">{checked.household}</b>{checked.owner ? <> ({checked.owner}&apos;s household)</> : null}.</div>
             <div className="mt-1 text-xs text-muted">Don&apos;t recognise it? Don&apos;t join. Ask the person who invited you for a fresh link.</div>
           </div>

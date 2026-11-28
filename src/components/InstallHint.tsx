@@ -14,7 +14,7 @@ export default function InstallHint() {
   if (!show) return null;
   return (
     <p className="card mx-auto mt-6 max-w-sm p-4 text-center text-sm text-muted">
-      📲 To install: tap the <b>Share</b> button, then <b>Add to Home Screen</b>.
+      To install: tap the <b>Share</b> button, then <b>Add to Home Screen</b>.
     </p>
   );
 }

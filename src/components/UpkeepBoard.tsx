@@ -11,6 +11,7 @@ import QuickLogSheet, { type LogTarget } from "@/components/QuickLogSheet";
 import RecurrenceEditor, { defaultRule } from "@/components/RecurrenceEditor";
 import { approxMonths, parseYmd, ruleFromMonths, type Recurrence } from "@/lib/rrule";
 import { friendlyError } from "@/lib/errors";
+import { Check, Plus, X } from "lucide-react";
 
 export type UpkeepTask = { id: string; title: string; months: number | null; rule: Recurrence | null; schedule: string; category: string | null; last: string | null; due: string | null; state: DueState };
 export type HistoryEntry = { id: string; projectId: string; title: string; date: string; cost: number | null; notes: string | null };
@@ -31,7 +32,7 @@ const STARTER = [
 ];
 
 const STATE_STYLE: Record<DueState, { label: (t: UpkeepTask) => string; style: React.CSSProperties }> = {
-  overdue: { label: (t) => (t.last ? `⏰ Overdue since ${prettyDate(t.due!)}` : "Due now"), style: { background: "color-mix(in srgb, var(--berry) 18%, transparent)", color: "var(--berry)" } },
+  overdue: { label: (t) => (t.last ? `Overdue since ${prettyDate(t.due!)}` : "Due now"), style: { background: "color-mix(in srgb, var(--berry) 18%, transparent)", color: "var(--berry)" } },
   soon: { label: (t) => (t.due === new Date().toISOString().slice(0, 10) ? "Due today" : `Due ${prettyDate(t.due!)}`), style: { background: "color-mix(in srgb, var(--gold) 22%, transparent)", color: "var(--bark)" } },
   never: { label: () => "Not logged yet", style: { background: "var(--line)", color: "var(--muted)" } },
   later: { label: (t) => `Next ${prettyDate(t.due!)}`, style: { background: "color-mix(in srgb, var(--moss) 14%, transparent)", color: "var(--moss)" } },
@@ -68,7 +69,7 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
     const { error } = await createClient().from("projects").insert(rows);
     setBusy(false);
     if (error) return toast(`Couldn't add: ${friendlyError(error)}`);
-    toast(`Added ${rows.length} upkeep task${rows.length === 1 ? "" : "s"} ✓ — log when each was last done`);
+    toast(`Added ${rows.length} upkeep task${rows.length === 1 ? "" : "s"} — log when each was last done`);
     setPicked([]); router.refresh();
   }
 
@@ -78,13 +79,13 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
     <>
       <header className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl text-moss">🔁 Upkeep</h1>
+          <h1 className="text-3xl">Upkeep</h1>
           <p className="text-sm text-muted">
             {tasks.length} recurring task{tasks.length === 1 ? "" : "s"}
-            {tasks.filter((t) => t.state === "overdue").length > 0 && <> · <b className="text-berry">{tasks.filter((t) => t.state === "overdue").length} overdue</b></>}
+            {tasks.filter((t) => t.state === "overdue").length > 0 && <> · <b className="font-medium text-berry">{tasks.filter((t) => t.state === "overdue").length} overdue</b></>}
           </p>
         </div>
-        <button type="button" onClick={() => setAdding(true)} className="btn inline-flex shrink-0">＋ New task</button>
+        <button type="button" onClick={() => setAdding(true)} className="btn inline-flex shrink-0"><Plus size={18} strokeWidth={1.75} aria-hidden />New task</button>
       </header>
 
       {/* Task cards */}
@@ -92,15 +93,15 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
         {tasks.map((t) => (
           <li key={t.id} className="card flex items-center gap-3 p-4">
             <Link href={`/projects/${t.id}`} className="min-w-0 flex-1">
-              <div className="truncate font-semibold">{t.title}</div>
-              <div className="truncate text-xs text-muted">{t.schedule} · {t.last ? `last ${prettyDate(t.last)}` : "not logged yet"}</div>
-              <span className="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold" style={STATE_STYLE[t.state].style}>{STATE_STYLE[t.state].label(t)}</span>
+              <div className="truncate font-medium">{t.title}</div>
+              <div className="mt-0.5 truncate text-xs text-muted">{t.schedule} · {t.last ? `last ${prettyDate(t.last)}` : "not logged yet"}</div>
+              <span className="mt-2 inline-block rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums" style={STATE_STYLE[t.state].style}>{STATE_STYLE[t.state].label(t)}</span>
             </Link>
             <button type="button" onClick={() => setLogging({ id: t.id, title: t.title, months: t.months, rule: t.rule })}
-              className="shrink-0 rounded-full border-2 border-moss px-3 py-2 text-sm font-semibold text-moss active:scale-95">✓ Log it</button>
+              className="btn-quiet shrink-0"><Check size={16} strokeWidth={1.75} aria-hidden className="text-moss" />Log it</button>
           </li>
         ))}
-        {tasks.length === 0 && <li className="card p-6 text-center text-sm text-muted md:col-span-2">No recurring upkeep yet. Add a task, or start from the checklist below. 🌿</li>}
+        {tasks.length === 0 && <li className="card p-6 text-center text-sm text-muted md:col-span-2">No recurring upkeep yet. Add a task, or start from the checklist below.</li>}
       </ul>
 
       {/* Starter checklist */}
@@ -108,11 +109,11 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
         <section className="card mt-5 p-4">
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => setStarterOpen(!starterOpen)} aria-expanded={starterOpen} className="flex min-w-0 flex-1 items-center justify-between text-left">
-              <span className="text-lg font-semibold">🧺 Starter checklist</span>
+              <span className="text-base font-medium">Starter checklist</span>
               <span className="text-sm text-muted">{starterOpen ? "Collapse" : `${suggestions.length} ideas`}</span>
             </button>
             <button type="button" onClick={() => dismissStarter(true)} aria-label="Don't show the starter checklist"
-              className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-muted hover:text-ink">✕ Don&apos;t show</button>
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-line px-2.5 text-xs text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"><X size={14} strokeWidth={1.5} aria-hidden />Don&apos;t show</button>
           </div>
           {starterOpen && (
             <>
@@ -139,8 +140,8 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
 
       {/* History */}
       <section className="mt-8">
-        <h2 className="mb-3 text-xl">📜 History</h2>
-        {history.length === 0 ? <p className="card p-5 text-sm text-muted">Nothing logged yet. Each “✓ Log it” lands here — handy records for when you sell.</p> : years.map((y) => {
+        <h2 className="mb-3 text-base">History</h2>
+        {history.length === 0 ? <p className="card p-5 text-sm text-muted">Nothing logged yet. Each “Log it” lands here — handy records for when you sell.</p> : years.map((y) => {
           const entries = history.filter((h) => h.date.startsWith(y));
           const total = entries.reduce((s, h) => s + (h.cost ?? 0), 0);
           return (
@@ -168,7 +169,7 @@ export default function UpkeepBoard({ tasks, history, categories, existingTitles
 
       {suggestions.length > 0 && starterDismissed && (
         <p className="mt-6 text-center text-sm">
-          <button type="button" onClick={() => dismissStarter(false)} className="text-muted underline">🧺 Show the starter checklist</button>
+          <button type="button" onClick={() => dismissStarter(false)} className="text-muted underline-offset-4 hover:text-ink hover:underline">Show the starter checklist</button>
         </p>
       )}
 
@@ -216,14 +217,14 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
       const { error: logError } = await supabase.from("service_logs").insert({ project_id: data.id, performed_on: last, cost: cost === "" ? null : Number(cost) });
       if (logError) { setError(logError.message); setBusy(false); return; }
     }
-    toast(`Added “${title.trim()}” ✓`);
+    toast(`Added “${title.trim()}”`);
     onClose(); router.refresh();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center" onClick={() => !busy && onClose()}>
       <form role="dialog" aria-modal="true" aria-labelledby="newtask-title" onSubmit={save} className="card max-h-[85dvh] w-full max-w-md space-y-3 overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
-        <h2 id="newtask-title" className="text-lg">＋ New upkeep task</h2>
+        <h2 id="newtask-title" className="text-lg">New upkeep task</h2>
         <label className="block"><span className="mb-1 block text-sm font-medium text-muted">What needs doing?</span>
           <input className="input" required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Replace HVAC filter" autoFocus /></label>
         <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Category</span>
@@ -240,7 +241,7 @@ function NewTaskSheet({ categories, defaultOwner, onClose }: { categories: { id:
         </div>
         {error && <p className="text-sm text-berry">{error}</p>}
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} disabled={busy} className="flex-1 rounded-full border border-line px-4 py-3 font-semibold">Cancel</button>
+          <button type="button" onClick={onClose} disabled={busy} className="btn-quiet min-h-11 flex-1">Cancel</button>
           <button className="btn inline-flex flex-1" disabled={busy}>{busy ? "Saving…" : "Add task"}</button>
         </div>
       </form>
