@@ -32,7 +32,7 @@ export default function QuickLogSheet({ task, onClose }: { task: LogTarget | nul
     if (error) { setError(friendlyError(error)); return; }
     const nd = nextDueDate(date, task!.months, null, null, task!.rule ?? null);
     const next = nd ? ` — next due ${prettyDate(nd)}` : task!.rule ? " — that was the last one in the series" : "";
-    toast(`Logged “${task!.title}” ✓${next}`);
+    toast(`Logged “${task!.title}”${next}`);
     setCost(""); setNotes(""); setDate(today);
     onClose();
     router.refresh();
@@ -43,7 +43,7 @@ export default function QuickLogSheet({ task, onClose }: { task: LogTarget | nul
       onKeyDown={(e) => { if (e.key === "Escape" && !busy) onClose(); }}>
       <form role="dialog" aria-modal="true" aria-labelledby="qlog-title" onSubmit={save}
         className="card w-full max-w-sm space-y-3 p-5" onClick={(e) => e.stopPropagation()}>
-        <h2 id="qlog-title" className="text-lg">✓ Log “{task.title}”</h2>
+        <h2 id="qlog-title" className="text-lg">Log “{task.title}”</h2>
         <div className="grid grid-cols-2 gap-3">
           <label className="block"><span className="mb-1 block text-sm font-medium text-muted">Done on</span>
             <input className="input" type="date" required value={date} max={today} onChange={(e) => setDate(e.target.value)} /></label>
@@ -54,7 +54,7 @@ export default function QuickLogSheet({ task, onClose }: { task: LogTarget | nul
           <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Who did it, what they found…" /></label>
         {error && <p className="text-sm text-berry">{error}</p>}
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} disabled={busy} className="flex-1 rounded-full border border-line px-4 py-3 font-semibold">Cancel</button>
+          <button type="button" onClick={onClose} disabled={busy} className="btn-quiet min-h-11 flex-1">Cancel</button>
           <button className="btn inline-flex flex-1" disabled={busy}>{busy ? "Saving…" : "Log it"}</button>
         </div>
       </form>

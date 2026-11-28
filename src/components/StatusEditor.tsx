@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import { friendlyError } from "@/lib/errors";
 import { positionAfter, type StatusDef } from "@/lib/statuses";
+import { Lock, Plus, X } from "lucide-react";
 
 type Row = StatusDef & { count: number };
 
@@ -33,7 +34,7 @@ export default function StatusEditor({ statuses, isOwner }: { statuses: Row[]; i
       if (error) { setBusy(false); return toast(`Couldn't rename “${s.name}”: ${friendlyError(error)}`); }
     }
     setBusy(false); setNames({});
-    toast("Statuses saved ✓"); router.refresh();
+    toast("Statuses saved"); router.refresh();
   }
 
   async function add(e: React.FormEvent) {
@@ -46,7 +47,7 @@ export default function StatusEditor({ statuses, isOwner }: { statuses: Row[]; i
     setBusy(false);
     if (error) return toast(`Couldn't add: ${friendlyError(error)}`);
     setAdding("");
-    toast(`Added “${name}” ✓`); router.refresh();
+    toast(`Added “${name}”`); router.refresh();
   }
 
   async function remove(s: Row) {
@@ -59,23 +60,23 @@ export default function StatusEditor({ statuses, isOwner }: { statuses: Row[]; i
     if (error) return toast(`Couldn't remove: ${friendlyError(error)}`);
     if (!data?.length) return toast("Only the household owner can remove a status");
     setRemoving(null);
-    toast(s.count ? `Removed “${s.name}” — moved ${s.count} project${s.count === 1 ? "" : "s"} to “${moveTo}” ✓` : `Removed “${s.name}” ✓`);
+    toast(s.count ? `Removed “${s.name}” — moved ${s.count} project${s.count === 1 ? "" : "s"} to “${moveTo}”` : `Removed “${s.name}”`);
     router.refresh();
   }
 
   return (
     <section className="card space-y-3 p-5">
-      <h2 className="text-lg">🚦 Statuses</h2>
+      <h2 className="text-lg">Statuses</h2>
       <p className="text-sm text-muted">
-        The built-in statuses (🔒) always stay. Add your own wherever they fit in the order; rename them any time.
+        The built-in statuses (with a lock) always stay. Add your own wherever they fit in the order; rename them any time.
         {!isOwner && " Only the household owner can remove one."}
       </p>
       <ul className="space-y-2">
         {statuses.map((s) => (
           <li key={s.name}>
             {s.builtin ? (
-              <div className="flex items-center gap-2 rounded-[0.85rem] px-3 py-2 text-sm">
-                <span aria-hidden="true">🔒</span>
+              <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm">
+                <Lock size={14} strokeWidth={1.5} aria-hidden className="text-faint" />
                 <span className="flex-1">{s.name}</span>
                 <span className="text-xs text-muted">{s.count} project{s.count === 1 ? "" : "s"}</span>
               </div>
@@ -86,12 +87,12 @@ export default function StatusEditor({ statuses, isOwner }: { statuses: Row[]; i
                 <span className="w-16 text-right text-xs text-muted">{s.count} project{s.count === 1 ? "" : "s"}</span>
                 {isOwner && (
                   <button type="button" onClick={() => { setRemoving(removing === s.name ? null : s.name); setMoveTo("Not Started"); }}
-                    aria-label={`Remove ${s.name}`} aria-expanded={removing === s.name} className="px-1 text-sm text-muted hover:text-berry">✕</button>
+                    aria-label={`Remove ${s.name}`} aria-expanded={removing === s.name} className="flex h-8 w-8 items-center justify-center rounded-md text-faint transition-colors duration-150 hover:bg-raised hover:text-berry"><X size={16} strokeWidth={1.5} aria-hidden /></button>
                 )}
               </div>
             )}
             {removing === s.name && (
-              <div className="mt-2 space-y-2 rounded-2xl border-2 p-3" style={{ borderColor: "var(--berry)" }}>
+              <div className="mt-2 space-y-2 rounded-xl border p-3" style={{ borderColor: "var(--berry)" }}>
                 {s.count > 0 ? (
                   <label className="block text-sm">
                     <span className="mb-1 block">Move its {s.count} project{s.count === 1 ? "" : "s"} to:</span>
@@ -101,8 +102,8 @@ export default function StatusEditor({ statuses, isOwner }: { statuses: Row[]; i
                   </label>
                 ) : <p className="text-sm">No projects use “{s.name}”.</p>}
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setRemoving(null)} disabled={busy} className="flex-1 rounded-full border border-line px-3 py-2 text-sm font-semibold">Cancel</button>
-                  <button type="button" onClick={() => remove(s)} disabled={busy} className="flex-1 rounded-full bg-berry px-3 py-2 text-sm font-semibold text-white">
+                  <button type="button" onClick={() => setRemoving(null)} disabled={busy} className="btn-quiet min-h-11 flex-1">Cancel</button>
+                  <button type="button" onClick={() => remove(s)} disabled={busy} className="flex-1 rounded-full bg-berry px-3 py-2 text-sm font-medium text-white">
                     {busy ? "Working…" : s.count ? "Move & remove" : "Remove"}
                   </button>
                 </div>
@@ -120,7 +121,7 @@ export default function StatusEditor({ statuses, isOwner }: { statuses: Row[]; i
               {statuses.map((x) => <option key={x.name}>{x.name}</option>)}
             </select>
           </label>
-          <button className="shrink-0 rounded-full border-2 border-moss px-4 py-2 text-sm font-semibold text-moss" disabled={busy || !adding.trim()}>＋ Add</button>
+          <button className="btn-quiet shrink-0" disabled={busy || !adding.trim()}><Plus size={16} strokeWidth={1.75} aria-hidden />Add</button>
         </div>
       </form>
       {custom.length > 0 && (

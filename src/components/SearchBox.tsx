@@ -1,6 +1,7 @@
 "use client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
+import { Search } from "lucide-react";
 
 /** Live search: updates ?q= (keeping other filters) after a short pause in typing. */
 export default function SearchBox() {
@@ -23,16 +24,16 @@ export default function SearchBox() {
 
   return (
     <form role="search" onSubmit={(e) => { e.preventDefault(); clearTimeout(timer.current); push(value); }} className="relative">
-      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" aria-hidden>🔍</span>
+      <Search size={18} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-faint" />
       <input
         type="search" value={value} aria-label="Search projects"
-        placeholder="Search projects, notes, next steps…"
+        placeholder="Search projects"
         onChange={(e) => {
           setValue(e.target.value);
           clearTimeout(timer.current);
           timer.current = setTimeout(() => push(e.target.value), 250);
         }}
-        className="input !rounded-full !pl-11"
+        className="input !pl-10"
       />
     </form>
   );

@@ -34,7 +34,7 @@ export default function ServiceLog({ projectId, months, logs, target, rule }: { 
     // Keep the project form below in step, so a later "Save changes" doesn't undo this.
     const field = (document.getElementById("project-form") as HTMLFormElement | null)?.elements.namedItem("target_date") as HTMLInputElement | null;
     if (field) field.value = d;
-    toast(`Next due set to ${fmt(d)} ✓`);
+    toast(`Next due set to ${fmt(d)}`);
     router.refresh();
   }
   const overdue = !!due && due < today;
@@ -54,7 +54,7 @@ export default function ServiceLog({ projectId, months, logs, target, rule }: { 
     const field = (document.getElementById("project-form") as HTMLFormElement | null)?.elements.namedItem("target_date") as HTMLInputElement | null;
     if (field) field.value = "";
     setCost(""); setNotes(""); setBusy(false);
-    toast("Service logged ✓");
+    toast("Service logged");
     router.refresh();
   }
 
@@ -67,9 +67,9 @@ export default function ServiceLog({ projectId, months, logs, target, rule }: { 
 
   return (
     <section className="card mt-6 p-5">
-      <h2 className="text-xl">🔧 Service log</h2>
+      <h2 className="text-xl">Service log</h2>
       <p className="mt-1 text-sm text-muted">
-        {rule ? `🔁 ${describe(rule)}. ` : months ? `Repeats every ${months} month${months === 1 ? "" : "s"}. ` : "Set a repeat pattern below to track when the next one is due. "}
+        {rule ? `${describe(rule)}. ` : months ? `Repeats every ${months} month${months === 1 ? "" : "s"}. ` : "Set a repeat pattern below to track when the next one is due. "}
         {due ? <span className={overdue ? "font-semibold text-berry" : ""}>{overdue ? "Overdue since " : "Next due "}{fmt(due)}.</span> : rule && logs.length ? "The series has ended." : logs.length === 0 ? "Nothing logged yet." : null}
         {logs.length > 0 && <> Upkeep spent: <b>{money(total)}</b> (not counted in home value).</>}
       </p>
@@ -89,7 +89,7 @@ export default function ServiceLog({ projectId, months, logs, target, rule }: { 
         <button className="btn inline-flex disabled:opacity-50" disabled={busy || future}>{busy ? "Saving…" : future ? "Set as next due" : "Log service"}</button>
       </form>
       {future && (
-        <p className="mt-2 text-sm text-muted">📅 A future date reschedules this task — it&apos;s saved as the next due date. Pick today or an earlier date to log a service instead.</p>
+        <p className="mt-2 text-sm text-muted">A future date reschedules this task — it&apos;s saved as the next due date. Pick today or an earlier date to log a service instead.</p>
       )}
       {error && <p className="mt-2 text-sm text-berry">{error}</p>}
 

@@ -14,6 +14,7 @@ import { isoDate } from "@/lib/dates";
 import { money, type Project } from "@/lib/constants";
 import { statusRanker } from "@/lib/statuses";
 import { priorityLabel } from "@/lib/priorities";
+import { ChevronRight, Trash2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -170,7 +171,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
     <BulkSelect options={{ categories: categories ?? [], folders, priorities: hh.priorities, owners: hh.owners, statuses: hh.statusNames, visibleIds: projects.map((p) => p.id) }}>
       <header className="flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-3xl text-moss">Projects</h1>
+          <h1 className="text-3xl">Projects</h1>
           <p className="text-sm text-muted">
             {projects.length} {includeCompleted ? "shown" : "open"}
             {estimate > 0 && <> · est. <b className="text-ink">{money(estimate)}</b></>}
@@ -193,12 +194,12 @@ export default async function Projects({ searchParams }: { searchParams: Promise
           ? groups.map((g) => (
             <li key={g.key}>
               <details open className="group">
-                <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 bg-moss/10 px-4 py-2.5 [&::-webkit-details-marker]:hidden">
-                  <span aria-hidden="true" className="text-xs text-muted transition-transform group-open:rotate-90">▶</span>
+                <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 bg-raised/60 px-4 py-2.5 [&::-webkit-details-marker]:hidden">
+                  <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="text-faint transition-transform duration-150 group-open:rotate-90" />
                   {g.color ? <FolderIcon color={g.color} size={22} /> : null}
-                  <span className="min-w-0 flex-1 truncate font-bold">{g.name}</span>
-                  <span className="text-xs text-muted">{g.items.length}</span>
-                  {g.href && <Link href={g.href} className="text-xs font-semibold text-moss underline">Open</Link>}
+                  <span className="min-w-0 flex-1 truncate font-medium">{g.name}</span>
+                  <span className="text-xs tabular-nums text-muted">{g.items.length}</span>
+                  {g.href && <Link href={g.href} className="text-xs font-medium text-moss underline-offset-4 hover:underline">Open</Link>}
                 </summary>
                 <ul className="divide-y divide-line border-t border-line">
                   {g.items.map((p) => <ProjectListItem statuses={hh.statusNames} key={p.id} p={item(p)} />)}
@@ -211,19 +212,19 @@ export default async function Projects({ searchParams }: { searchParams: Promise
             return (
               <Fragment key={p.id}>
                 {header && (
-                  <li className="bg-moss/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-                    {p.status} · {projects.filter((x) => x.status === p.status).length}
+                  <li className="bg-raised/60 px-4 py-2 text-xs text-muted">
+                    <span className="font-medium text-ink">{p.status}</span> <span className="ml-1 tabular-nums">{projects.filter((x) => x.status === p.status).length}</span>
                   </li>
                 )}
                 <ProjectListItem statuses={hh.statusNames} p={item(p)} />
               </Fragment>
             );
           })}
-        {projects.length === 0 && <li className="p-6 text-center text-sm text-muted">Nothing found under these leaves. 🍂 Try fewer words or clear the filters.</li>}
+        {projects.length === 0 && <li className="p-6 text-center text-sm text-muted">Nothing found under these leaves. Try fewer words or clear the filters.</li>}
       </ul>
 
       <p className="mt-6 text-center text-sm">
-        <Link href="/projects/deleted" className="text-muted underline">🗑️ Recently deleted{deletedCount ? ` (${deletedCount})` : ""}</Link>
+        <Link href="/projects/deleted" className="inline-flex items-center gap-1.5 text-muted underline-offset-4 hover:text-ink hover:underline"><Trash2 size={14} strokeWidth={1.5} aria-hidden />Recently deleted{deletedCount ? ` (${deletedCount})` : ""}</Link>
       </p>
     </BulkSelect>
   );

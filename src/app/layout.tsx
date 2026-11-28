@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import { Figtree, Fraunces } from "next/font/google";
 import "./globals.css";
 import RegisterSW from "@/components/RegisterSW";
+
+const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree", display: "swap" });
+const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", weight: ["500"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "Home Hollow",
@@ -13,8 +17,8 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f0dc" },
-    { media: "(prefers-color-scheme: dark)", color: "#14201a" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f4ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#161513" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -26,7 +30,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // dynamically rendered, which the nonce needs).
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${figtree.variable} ${fraunces.variable}`} suppressHydrationWarning>
       <head>
         {/* Apply a saved Light/Dark choice before first paint, so there's no flash. */}
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('hh-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}" }} />

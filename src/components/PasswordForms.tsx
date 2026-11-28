@@ -12,7 +12,7 @@ function Shell({ children, footer }: { children: React.ReactNode; footer?: React
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6">
       <div className="mb-8 text-center">
         <div className="flex justify-center"><Cottage size={88} /></div>
-        <h1 className="mt-3 text-3xl text-moss">Home Hollow</h1>
+        <h1 className="font-display mt-3 text-3xl">Home Hollow</h1>
       </div>
       {children}
       {footer && <p className="mt-4 text-center text-sm text-muted">{footer}</p>}
@@ -45,7 +45,7 @@ export function ForgotForm() {
     <Shell footer={<>Remembered it? <Link href="/login" className="text-moss underline">Log in</Link></>}>
       {sent ? (
         <div className="card space-y-3 p-5">
-          <h2 className="text-xl">Check your email 📬</h2>
+          <h2 className="text-xl">Check your email</h2>
           <p className="text-sm text-muted">
             If <b className="text-ink">{email.trim()}</b> has a Home Hollow account, a link to set a new password is on its way.
             It can take a minute; check spam too. The link works once and expires after an hour.
@@ -54,7 +54,7 @@ export function ForgotForm() {
         </div>
       ) : (
         <form onSubmit={submit} className="card space-y-3 p-5">
-          <h2 className="text-xl">Forgot your password? 🗝️</h2>
+          <h2 className="text-xl">Forgot your password?</h2>
           {expired && <p className="rounded-xl bg-berry/10 p-2 text-sm text-berry">That reset link has expired, was already used, or was opened on a different device or browser. Ask for a new one below.</p>}
           <p className="text-sm text-muted">Enter your email and we&apos;ll send a link to set a new one.</p>
           <input className="input" type="email" required placeholder="Email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -92,7 +92,7 @@ export function NewPasswordForm() {
   if (done) return (
     <Shell>
       <div className="card space-y-3 p-5">
-        <h2 className="text-xl">Password changed ✓</h2>
+        <h2 className="text-xl">Password changed</h2>
         <p className="text-sm text-muted">Use your new password next time you log in, on any device.</p>
         <button type="button" onClick={() => { router.replace("/"); router.refresh(); }} className="btn inline-flex w-full">Go home</button>
       </div>
@@ -102,7 +102,7 @@ export function NewPasswordForm() {
   return (
     <Shell footer={<Link href="/" className="text-moss underline">Cancel</Link>}>
       <form onSubmit={submit} className="card space-y-3 p-5">
-        <h2 className="text-xl">Set a new password 🔑</h2>
+        <h2 className="text-xl">Set a new password</h2>
         <PasswordInput className="input" required minLength={8} placeholder="New password (8+ characters)" autoComplete="new-password"
           value={password} onChange={(e) => setPassword(e.target.value)} aria-label="New password" autoFocus />
         <PasswordInput className="input" required minLength={8} placeholder="Type it again" autoComplete="new-password"

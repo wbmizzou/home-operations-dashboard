@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import { friendlyError } from "@/lib/errors";
 import { PHOTO_BUCKET as BUCKET, thumbPath } from "@/lib/photos";
+import { Trash2, X } from "lucide-react";
 
 export type Photo = { id: string; path: string; caption: string | null; created_at: string; by: string | null; url: string | null; thumb: string | null };
 
@@ -24,7 +25,7 @@ async function shrink(file: File, max: number, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't read that photo"))), "image/jpeg", quality));
 }
 
-type Upload = { name: string; state: "Shrinking…" | "Uploading…" | "Added ✓" | "Failed"; pct: number };
+type Upload = { name: string; state: "Shrinking…" | "Uploading…" | "Added" | "Failed"; pct: number };
 
 /** Photos card at the top of a project: add from the camera roll, see thumbnails, open one full screen. */
 export default function ProjectPhotos({ projectId, householdId, photos }: { projectId: string; householdId: string; photos: Photo[] }) {
@@ -51,7 +52,7 @@ export default function ProjectPhotos({ projectId, householdId, photos }: { proj
         if (upT.error) throw upT.error;
         const { error } = await supabase.from("project_photos").insert({ project_id: projectId, path });
         if (error) { await supabase.storage.from(BUCKET).remove([path, thumbPath(path)]); throw error; }
-        set(i, { state: "Added ✓", pct: 100 }); added++;
+        set(i, { state: "Added", pct: 100 }); added++;
       } catch (e) {
         set(i, { state: "Failed", pct: 100 });
         toast(`Couldn't add ${file.name}: ${friendlyError(e as { message: string })}`);
@@ -67,7 +68,7 @@ export default function ProjectPhotos({ projectId, householdId, photos }: { proj
     <section className="card mt-4 p-4" aria-label="Photos">
       <input ref={input} type="file" accept="image/*" multiple hidden onChange={(e) => add(e.target.files)} />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg">📷 Photos {photos.length > 0 && <span className="text-sm font-semibold text-muted">{photos.length}</span>}</h2>
+        <h2 className="text-lg">Photos {photos.length > 0 && <span className="text-sm font-semibold text-muted">{photos.length}</span>}</h2>
         <button type="button" onClick={() => input.current?.click()} disabled={busy}
           className="btn inline-flex !px-4 !py-2 text-sm">{busy ? "Adding…" : "Add photos"}</button>
       </div>
@@ -104,7 +105,7 @@ export default function ProjectPhotos({ projectId, householdId, photos }: { proj
               ))}
             </ul>
             <p className="text-xs text-muted">Shrunk to about 300 KB each, with location data removed, before upload.</p>
-            <button type="button" onClick={() => setUploads(null)} disabled={busy} className="w-full rounded-full border border-line px-4 py-3 font-semibold disabled:opacity-40">
+            <button type="button" onClick={() => setUploads(null)} disabled={busy} className="btn-quiet min-h-11 w-full">
               {busy ? "Working…" : "Done"}</button>
           </div>
         </div>
@@ -136,7 +137,7 @@ function Viewer({ photos, index, onIndex, onClose }: { photos: Photo[]; index: n
     if (next === (p.caption ?? null)) return;
     const { error } = await createClient().from("project_photos").update({ caption: next }).eq("id", p.id);
     if (error) return toast(`Couldn't save caption: ${friendlyError(error)}`);
-    toast("Caption saved ✓"); router.refresh();
+    toast("Caption saved"); router.refresh();
   }
 
   async function remove() {
@@ -152,26 +153,26 @@ function Viewer({ photos, index, onIndex, onClose }: { photos: Photo[]; index: n
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Photo" className="fixed inset-0 z-50 flex flex-col gap-3 bg-[#14201a] p-4 pt-[max(1rem,env(safe-area-inset-top))] text-[#f4e9d2]">
+    <div role="dialog" aria-modal="true" aria-label="Photo" className="fixed inset-0 z-50 flex flex-col gap-3 bg-[#161513] p-4 pt-[max(1rem,env(safe-area-inset-top))] text-[#efe9de]">
       <div className="flex items-center justify-between">
-        <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-xl">✕</button>
-        <span className="text-sm text-[#b3a58d]">{index + 1} of {photos.length}</span>
-        <button type="button" onClick={remove} disabled={busy} aria-label="Delete photo" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e3788c]/15 text-[#e3788c]">🗑️</button>
+        <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10"><X size={20} strokeWidth={1.5} aria-hidden /></button>
+        <span className="text-sm text-[#aaa398]">{index + 1} of {photos.length}</span>
+        <button type="button" onClick={remove} disabled={busy} aria-label="Delete photo" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e5788a]/15 text-[#e5788a]"><Trash2 size={20} strokeWidth={1.5} aria-hidden /></button>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center"
         onTouchStart={(e) => { startX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => { const s = startX.current; startX.current = null; if (s === null) return; const dx = e.changedTouches[0].clientX - s; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); }}>
         {p.url ? <img src={p.url} alt={p.caption ?? `Photo ${index + 1}`} className="max-h-full max-w-full rounded-2xl object-contain" />
-          : <p className="text-sm text-[#b3a58d]">This photo couldn&apos;t be loaded.</p>}
+          : <p className="text-sm text-[#aaa398]">This photo couldn&apos;t be loaded.</p>}
         {index > 0 && <button type="button" onClick={() => go(-1)} aria-label="Previous photo" className="absolute left-0 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-xl">‹</button>}
         {index < photos.length - 1 && <button type="button" onClick={() => go(1)} aria-label="Next photo" className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-xl">›</button>}
       </div>
-      <label className="block text-sm text-[#b3a58d]">Caption
+      <label className="block text-sm text-[#aaa398]">Caption
         <input value={caption} maxLength={120} onChange={(e) => setCaption(e.target.value)} onBlur={saveCaption}
           onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} placeholder="Add a caption"
-          className="mt-1 w-full rounded-[0.85rem] border border-[#2e4235] bg-[#1d2d24] px-3.5 py-3 text-base text-[#f4e9d2]" />
+          className="mt-1 w-full rounded-[0.85rem] border border-[#2e4235] bg-[#1d2d24] px-3.5 py-3 text-base text-[#efe9de]" />
       </label>
-      <p className="pb-[env(safe-area-inset-bottom)] text-xs text-[#b3a58d]">
+      <p className="pb-[env(safe-area-inset-bottom)] text-xs text-[#aaa398]">
         Added{p.by ? ` by ${p.by}` : ""} · {new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
       </p>
     </div>

@@ -18,7 +18,7 @@ export default function CompleteProject({ id, title, defaultCost, open, onClose 
       status: "Complete", completed_on: date, actual_cost: cost === "" ? null : Number(cost),
     }).eq("id", id);
     if (error) { setError(friendlyError(error)); setBusy(false); return; }
-    toast(`“${title}” marked complete ✓`);
+    toast(`“${title}” marked complete`);
     router.push("/"); router.refresh();
   }
 

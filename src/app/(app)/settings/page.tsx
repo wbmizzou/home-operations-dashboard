@@ -22,7 +22,7 @@ export default async function Settings() {
   const categories = (cats ?? []).map((c) => ({ ...c, count: (used ?? []).filter((u) => u.category_id === c.id).length }));
   return (
     <>
-      <h1 className="text-3xl text-moss">⚙️ Settings</h1>
+      <h1 className="text-3xl">Settings</h1>
       <SettingsPanel household={hh.household} members={hh.members} myUserId={user?.id ?? ""} isOwner={hh.isOwner}
         email={user?.email ?? ""} activity={(activity ?? []) as Activity[]}
         inviteExpired={new Date(hh.household.invite_expires_at).getTime() <= nowMs()}>

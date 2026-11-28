@@ -18,5 +18,5 @@ export async function restoreProject(id: string, title: string, router: Router) 
   const { error } = await createClient().from("projects").update({ deleted_at: null }).eq("id", id);
   if (error) { toast(`Couldn't restore: ${friendlyError(error)}`); return; }
   router.refresh();
-  toast(`Restored “${title}” ✓`);
+  toast(`Restored “${title}”`);
 }

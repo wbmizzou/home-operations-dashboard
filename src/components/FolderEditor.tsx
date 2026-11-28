@@ -20,7 +20,7 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (c: 
             style={{ background: c }} />
         );
       })}
-      <label className={`relative flex h-10 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-semibold ${custom ? "border-ink" : "border-line text-muted"}`}>
+      <label className={`relative flex h-10 items-center gap-1.5 rounded-full border px-3 text-sm font-medium ${custom ? "border-ink" : "border-line text-muted"}`}>
         <span className="h-5 w-5 rounded-full border border-line" style={{ background: value }} aria-hidden="true" />
         Custom
         <input type="color" value={isHexColor(value) ? value : "#ffd36e"} onChange={(e) => onChange(e.target.value)}
@@ -50,7 +50,7 @@ export default function FolderEditor({ folder, onClose, onDeleted }: { folder?: 
       : await supabase.from("folders").insert(values);
     setBusy(false);
     if (error) { setError(error.code === "23505" ? "You already have a folder with that name." : friendlyError(error)); return; }
-    toast(folder ? "Folder saved ✓" : `Made the “${values.name}” folder ✓`);
+    toast(folder ? "Folder saved" : `Made the “${values.name}” folder`);
     onClose(); router.refresh();
   }
 
@@ -80,7 +80,7 @@ export default function FolderEditor({ folder, onClose, onDeleted }: { folder?: 
           <input className="input" value={goal} maxLength={120} onChange={(e) => setGoal(e.target.value)} placeholder="What's this bigger job for?" /></label>
         {error && <p role="alert" className="text-sm text-berry">{error}</p>}
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} disabled={busy} className="flex-1 rounded-full border border-line px-4 py-3 font-semibold">Cancel</button>
+          <button type="button" onClick={onClose} disabled={busy} className="btn-quiet min-h-11 flex-1">Cancel</button>
           <button className="btn inline-flex flex-1" disabled={busy}>{busy ? "Saving…" : folder ? "Save" : "Make folder"}</button>
         </div>
         {folder && <button type="button" onClick={remove} disabled={busy} className="w-full text-center text-sm text-berry underline">Delete folder (keeps its projects)</button>}

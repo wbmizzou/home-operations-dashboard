@@ -1,4 +1,4 @@
-// Tiny app-wide toast: call toast("Saved ✓") from any client component. The <Toaster />
+// Tiny app-wide toast: call toast("Saved") from any client component. The <Toaster />
 // lives in the app layout, so a toast survives client-side navigation.
 export type ToastAction = { label: string; run: () => void | Promise<void> };
 export type ToastDetail = { message: string; action?: ToastAction; ms?: number };

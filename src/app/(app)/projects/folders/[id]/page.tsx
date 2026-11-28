@@ -11,6 +11,7 @@ import { money, type Project } from "@/lib/constants";
 import { statusRanker } from "@/lib/statuses";
 import { priorityLabel } from "@/lib/priorities";
 import type { Folder } from "@/lib/folders";
+import { Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 const DUE_SOON_DAYS = 14;
@@ -78,16 +79,16 @@ export default async function FolderPage({ params }: { params: Promise<{ id: str
           <div className="h-full rounded-full bg-moss" style={{ width: `${pct}%` }} />
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-2xl bg-bg px-1 py-2"><div className="text-lg font-bold">{done.length} / {projects.length}</div><div className="text-[11px] text-muted">done</div></div>
-          <div className="rounded-2xl bg-bg px-1 py-2"><div className="text-lg font-bold">{left ? money(left) : "—"}</div><div className="text-[11px] text-muted">left to spend</div></div>
-          <div className="rounded-2xl bg-bg px-1 py-2"><div className="text-lg font-bold">{spent ? money(spent) : "—"}</div><div className="text-[11px] text-muted">spent</div></div>
+          <div className="rounded-lg bg-raised px-1 py-2"><div className="text-lg font-medium tabular-nums">{done.length} / {projects.length}</div><div className="text-xs text-muted">done</div></div>
+          <div className="rounded-lg bg-raised px-1 py-2"><div className="text-lg font-medium tabular-nums">{left ? money(left) : "—"}</div><div className="text-xs text-muted">left to spend</div></div>
+          <div className="rounded-lg bg-raised px-1 py-2"><div className="text-lg font-medium tabular-nums">{spent ? money(spent) : "—"}</div><div className="text-xs text-muted">spent</div></div>
         </div>
       </section>
 
       <h2 className="mt-6 text-lg">Still to do</h2>
       <ul className="card mt-2 divide-y divide-line overflow-hidden">
         {open.map((p) => <ProjectListItem statuses={hh.statusNames} key={p.id} p={item(p)} />)}
-        {open.length === 0 && <li className="p-5 text-center text-sm text-muted">{projects.length ? "All done here! 🎉" : "Nothing in this folder yet. Add a project, or pick this folder on any project's page."}</li>}
+        {open.length === 0 && <li className="p-5 text-center text-sm text-muted">{projects.length ? "All done here" : "Nothing in this folder yet. Add a project, or pick this folder on any project's page."}</li>}
       </ul>
 
       {done.length > 0 && (
@@ -99,7 +100,7 @@ export default async function FolderPage({ params }: { params: Promise<{ id: str
         </>
       )}
 
-      <Link href={`/projects/new?folder=${f.id}`} className="btn mt-6 flex w-full justify-center">＋ Add a project to this folder</Link>
+      <Link href={`/projects/new?folder=${f.id}`} className="btn mt-6 flex w-full justify-center"><Plus size={18} strokeWidth={1.75} aria-hidden />Add a project to this folder</Link>
     </>
   );
 }

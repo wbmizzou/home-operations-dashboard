@@ -149,6 +149,16 @@ export function Acorn({ size = 20 }: { size?: number }) {
   );
 }
 
+/** The logo mark: a flat acorn in one color (currentColor). */
+export function AcornMark({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path d="M12.75 2.5a.75.75 0 0 0-1.5 0V4C7 4.2 3.5 6.2 3.5 10h17c0-3.8-3.5-5.8-7.75-6V2.5Z" />
+      <path d="M5 11.5h14c0 5.2-3.1 9.6-7 10.5-3.9-.9-7-5.3-7-10.5Z" opacity=".55" />
+    </svg>
+  );
+}
+
 export function Leaf({ size = 18, color = "var(--moss)" }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className="inline-block align-[-3px]">
