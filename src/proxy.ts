@@ -111,5 +111,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // Everything except build assets and the few public files that must load signed out.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons/|sw.js|offline.html|manifest.webmanifest).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons/|fonts/|sw.js|offline.html|manifest.webmanifest).*)"],
 };

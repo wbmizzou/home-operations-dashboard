@@ -18,7 +18,7 @@
   --berry: #b4485d;
   --cream: #fff6e2;
   --on-accent: #ffffff;
-  --r1:#ece9cf;--r2:#d8e3b8;--r3:#c0d79b;--r4:#a6c77f;--r5:#8db866;--r6:#74a553;--r7:#5a8a45;--r8:#46703a;
+  --on-heat: var(--ink); /* numbers on the darkest heatmap cells */
   /* scene */
   --sky1:#ffe3c2; --sky2:#fdf1d6; --sun:#ffc457; --leaf:#e0894a;
   --hill1:#bcd79a; --hill2:#8fc07a; --hill3:#6aa862; --pine1:#4d8a56; --pine2:#79ad76;
@@ -43,7 +43,7 @@
     --berry: #e5788a;
     --cream: #fff3d9;
     --on-accent: #12160f;
-    --r1:#2c4234;--r2:#38573f;--r3:#456e4b;--r4:#558559;--r5:#67996a;--r6:#7fb27a;--r7:#98c88b;--r8:#b3dba0;
+    --on-heat: #12160f;
     --sky1:#1b2f3f; --sky2:#2d4a4a; --sun:#f7e6a8; --leaf:#d98a4f;
     --hill1:#2f5a46; --hill2:#26493a; --hill3:#1e3b30; --pine1:#183a2c; --pine2:#2a5642;
     --wall:#f3dcae; --roof:#d6637a; --door:#8b5e3c; --glow:#ffcf5e; --smoke:#8fa59f;
@@ -67,7 +67,7 @@
     --berry: #e5788a;
     --cream: #fff3d9;
     --on-accent: #12160f;
-    --r1:#2c4234;--r2:#38573f;--r3:#456e4b;--r4:#558559;--r5:#67996a;--r6:#7fb27a;--r7:#98c88b;--r8:#b3dba0;
+    --on-heat: #12160f;
     --sky1:#1b2f3f; --sky2:#2d4a4a; --sun:#f7e6a8; --leaf:#d98a4f;
     --hill1:#2f5a46; --hill2:#26493a; --hill3:#1e3b30; --pine1:#183a2c; --pine2:#2a5642;
     --wall:#f3dcae; --roof:#d6637a; --door:#8b5e3c; --glow:#ffcf5e; --smoke:#8fa59f;
@@ -97,7 +97,6 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 15px;
   line-height: 1.45;
 }
 
@@ -113,7 +112,7 @@ h1, h2, h3 { font-weight: 500; letter-spacing: 0; }
 /* The serif is for the household name and the invested figure only */
 .font-display { font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.01em; }
 
-:focus-visible { outline: 2px solid var(--moss); outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--moss); outline-offset: 2px; }
 
 @layer components {
 .card {
@@ -171,5 +170,5 @@ input.input[type="date"]::-webkit-datetime-edit { padding: 0; }
   transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out), border-color 150ms var(--ease-out);
 }
 .chip:hover { color: var(--ink); background: var(--raised); }
-.chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: var(--on-accent); font-weight: 500; }
+.chip[aria-pressed="true"], .chip-on { background: var(--moss); border-color: var(--moss); color: var(--on-accent); font-weight: 500; }
 }

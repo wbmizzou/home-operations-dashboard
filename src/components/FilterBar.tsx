@@ -140,7 +140,7 @@ export default function FilterBar({ categories, me, owners, priorities, statuses
         <div className="mt-3 flex flex-wrap gap-2">
           {applied.map((a) => (
             <button key={`${a.key}-${a.value}`} type="button" onClick={() => (a.key === "open" || a.key === "mine" ? update((sp) => sp.delete(a.key)) : toggle(a.key, a.value))}
-              className="chip !h-7 !text-xs" aria-pressed="true" aria-label={`Remove filter ${a.label}`}>
+              className="chip chip-on !h-7 !text-xs" aria-label={`Remove filter ${a.label}`}>
               {a.label}<X size={14} strokeWidth={1.75} aria-hidden />
             </button>
           ))}

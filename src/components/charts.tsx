@@ -134,7 +134,7 @@ export function SeasonHeatmap({ open, levels }: { open: Project[]; levels: Prior
                   <td key={p.value} className="p-0">
                     <Link href={`/projects?open=1&priority=${p.value}&season=${s}`} title={`${s} · ${p.label}: ${n}`}
                       className="flex h-10 items-center justify-center rounded-md text-sm font-medium tabular-nums transition-opacity duration-150 hover:opacity-80 md:h-12"
-                      style={{ background: n ? `color-mix(in srgb, var(--moss) ${Math.round(12 + t * 68)}%, var(--surface))` : "var(--raised)", color: t > 0.6 ? "var(--on-accent)" : n ? "var(--ink)" : "var(--faint)" }}>
+                      style={{ background: n ? `color-mix(in srgb, var(--moss) ${Math.round(12 + t * 68)}%, var(--surface))` : "var(--raised)", color: t > 0.6 ? "var(--on-heat)" : n ? "var(--ink)" : "var(--faint)" }}>
                       {n}
                     </Link>
                   </td>

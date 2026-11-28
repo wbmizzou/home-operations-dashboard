@@ -37,7 +37,7 @@ function ProjectRow({ p }: { p: Project }) {
   const overdue = !!p.target_date && p.target_date < new Date().toISOString().slice(0, 10);
   return (
     <li>
-      <Link href={`/projects/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3 transition-colors duration-150 first:rounded-t-[15px] last:rounded-b-[15px] hover:bg-raised/60">
+      <Link href={`/projects/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3 transition-colors duration-150 hover:bg-raised/60">
         <div className="min-w-0">
           <div className="truncate font-medium">{p.title}</div>
           <div className="mt-0.5 truncate text-xs text-muted">{p.categories?.name ?? "Uncategorized"} · {p.status}</div>
@@ -138,19 +138,19 @@ export default async function Dashboard() {
 
       <div className="grid gap-0 lg:grid-cols-2 lg:gap-6">
         <Section title={`Chores for the ${season.toLowerCase()}`}>
-          <ul className="card divide-y divide-line">
+          <ul className="card divide-y divide-line overflow-hidden">
             {thisSeason.length ? thisSeason.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing tagged for {season}</li>}
           </ul>
         </Section>
         <Section title={`${hh.priorities[0]?.focus ?? hh.priorities[0]?.label ?? "Top priority"}`} hint={`${p1.length} open`}>
-          <ul className="card divide-y divide-line">
+          <ul className="card divide-y divide-line overflow-hidden">
             {p1.length ? p1.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">All snug, nothing urgent in the burrow</li>}
           </ul>
         </Section>
       </div>
 
       <Section title="Coming up next">
-        <ul className="card divide-y divide-line">
+        <ul className="card divide-y divide-line overflow-hidden">
           {upcoming.length ? upcoming.map((p) => <ProjectRow key={p.id} p={p} />) : <li className="p-4 text-sm text-muted">Nothing on the calendar. Time for tea?</li>}
         </ul>
       </Section>
